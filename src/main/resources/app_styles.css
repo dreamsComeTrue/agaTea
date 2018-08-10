@@ -1,0 +1,55 @@
+.root {
+    -fx-font-size: 12pt;
+    -fx-font-family: "Tahoma";
+    -fx-background: #4e4f51;
+}
+
+#center-pane {
+    -fx-background-color: #55575c;
+}
+
+#center-logo {
+    -fx-font-size: 20px;
+    -fx-text-fill: #989a9d;
+}
+
+.button {
+    -fx-background-color: #989a9d;
+    -fx-min-width: 30px;
+    -fx-min-height: 30px;
+    -fx-max-width: 30px;
+    -fx-max-height: 30px;
+    -fx-background-size: 25px 25px;
+    -fx-background-repeat: no-repeat;
+    -fx-background-position: center 3px;
+}
+
+.button:hover {
+    -fx-background-color: #a6a8ab;
+}
+
+.button:armed {
+    -fx-background-color: #e7e9ee;
+}
+
+#new-button {
+    -fx-background-image: url("/icons/new.png");
+}
+
+#open-button {
+    -fx-background-image: url("/icons/open.png");
+}
+
+#save-button {
+    -fx-background-image: url("/icons/save.png");
+    -fx-background-position: center 4px;
+    -fx-background-size: 23px 23px;
+}
+
+/*.buttonStyle {*/
+/*-fx-text-fill: #006464;*/
+/*-fx-background-color: #DFB951;*/
+/*-fx-border-radius: 20;*/
+/*-fx-background-radius: 20;*/
+/*-fx-padding: 5;*/
+/*}*/
