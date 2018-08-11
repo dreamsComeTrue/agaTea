@@ -1,7 +1,7 @@
-# mill - simple developer editor
+# mill - simple code editor
 
 
-My goal is to create lightweight code editor, based on my experiences with Vim/VisualCode/IntelliJ
+My goal is to create lightweight code editor, based on my experiences with Vim/VisualCode/QtCreator/IntelliJ
 
 Features:
 
