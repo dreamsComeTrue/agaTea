@@ -11,6 +11,6 @@ libraryDependencies += "org.fxmisc.richtext" % "richtextfx" % "0.9.1"
 
 unmanagedJars in Compile += Attributed.blank(file("/usr/lib/jvm/openjfx/rt/lib/ext/jfxrt.jar"))
 
-//javaFxMainClass := "MillApp"
-mainClass := Some("MillApp")
+//javaFxMainClass := "mill.MillApp"
+mainClass := Some("mill.MillApp")
 
