@@ -1,4 +1,6 @@
-package ui
+// Copyright 2018 Dominik 'dreamsComeTrue' Jasiński. All Rights Reserved.
+
+package mill.ui
 
 import java.time.Duration
 import java.util
@@ -20,7 +22,6 @@ import org.fxmisc.flowless.VirtualizedScrollPane
 import org.fxmisc.richtext.model.{StyleSpans, StyleSpansBuilder}
 import org.fxmisc.richtext.{CodeArea, LineNumberFactory}
 import org.fxmisc.wellbehaved.event.{EventPattern, InputMap, Nodes}
-import org.reactfx.Subscription
 import org.reactfx.value.Val
 
 import scala.language.implicitConversions
@@ -74,37 +75,24 @@ class TextEditor(val tabName: String, val text: String, val path: String) extend
       foo(line)
     }
 
-    //  this.setBackground(new Background(new BackgroundFill(Color.RED, CornerRadii.EMPTY, Insets.EMPTY)))
-
-    val cleanupWhenDone: Subscription =
-      codeArea
-        .multiPlainChanges()
-        .successionEnds(Duration.ofMillis(50))
-        //        .supplyTask(() => computeHighlightingAsync)
-        //        .awaitLatest(codeArea.multiPlainChanges())
-        //        .filterMap(new java.util.function.Function[Try[StyleSpans[util.Collection[String]]], Optional[StyleSpans[util.Collection[String]]]]() {
-        //          override def apply(t: Try[StyleSpans[util.Collection[String]]]): Optional[StyleSpans[util.Collection[String]]] = {
-        //            null
-        //          }
-        //        }
-
-        //          t => {
-        //          if (t.isSuccess) {
-        //            Optional.of(t.get())
-        //          } else {
-        //            Optional.empty()
-        //          }
-        //      }
-        .subscribe(_ => codeArea.setStyleSpans(0, computeHighlighting(codeArea.getText())))
-
-
     codeArea.setParagraphGraphicFactory(graphicFactory)
     codeArea.setWrapText(true)
     codeArea.getStyleClass.add("codeArea")
-    codeArea.appendText(text)
     codeArea.displaceCaret(0)
 
+    //  Set async syntax highlighting
+    codeArea
+      .multiPlainChanges()
+      .successionEnds(Duration.ofMillis(50))
+      .supplyTask(() => computeHighlightingAsync)
+      .awaitLatest(codeArea.multiPlainChanges())
+      .filterMap(t => t.toOptional)
+      .subscribe(applyHighlighting _)
+
+    //  Fix 'Tab' key to insert 4 spaces
     changeKeyTabSize(codeArea)
+
+    codeArea.appendText(text)
 
     val result = new VirtualizedScrollPane(codeArea)
 
@@ -117,14 +105,6 @@ class TextEditor(val tabName: String, val text: String, val path: String) extend
 
     result
   }
-
-  //  def func(t: Try[StyleSpans[util.Collection[String]]]): java.util.function.Function[ Optional[StyleSpans[util.Collection[String]]] = {
-  //    if (t.isSuccess) {
-  //      Optional.of(t.get)
-  //    } else {
-  //      Optional.empty()
-  //    }
-  //  }
 
   def setText(text: String): Unit = {
     codeAreaVirtual.getContent.replaceText(0, codeAreaVirtual.getContent.getLength, text)
@@ -159,6 +139,7 @@ class TextEditor(val tabName: String, val text: String, val path: String) extend
       else if (matcher.group("STRING") != null) "string"
       else if (matcher.group("COMMENT") != null) "comment"
       else null
+
       // never happens
       assert(styleClass != null)
       spansBuilder.add(Collections.unmodifiableCollection(Collections.emptyList()), matcher.start - lastKwEnd)

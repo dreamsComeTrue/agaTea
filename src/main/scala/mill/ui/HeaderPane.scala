@@ -1,4 +1,6 @@
-package ui
+// Copyright 2018 Dominik 'dreamsComeTrue' Jasiński. All Rights Reserved.
+
+package mill.ui
 
 import javafx.event.ActionEvent
 import javafx.scene.control.{Button, Tooltip}
