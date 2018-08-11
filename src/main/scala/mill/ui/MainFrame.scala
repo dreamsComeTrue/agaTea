@@ -14,6 +14,7 @@ class MainFrame(stage: Stage) extends BorderPane {
   val topPane: AnchorPane = new HeaderPane(this)
   val bottomPane = new BottomPane()
   val contentPane = new ContentPane(this)
+  var filePath: String = new File(".").getCanonicalPath
 
   def setFocus(node: Node): Unit = {
     Platform.runLater(() => {
@@ -49,10 +50,11 @@ class MainFrame(stage: Stage) extends BorderPane {
     }
   }
 
-  def openFileDialog(): File = {
+  def getFileDialog(title: String): File = {
     val fileChooser = new FileChooser
 
-    fileChooser.setTitle("Open File")
+    fileChooser.setInitialDirectory(new File(filePath))
+    fileChooser.setTitle(title)
     fileChooser.showOpenDialog(stage)
   }
 

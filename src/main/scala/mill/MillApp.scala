@@ -15,6 +15,7 @@ object MillApp {
 
 class MillApp extends Application {
   private val stylesURL = getClass.getResource("/app_styles.css").toExternalForm
+  private val dialogURL = getClass.getResource("/dialog_styles.css").toExternalForm
   private val scrollbarsURL = getClass.getResource("/scrollbars.css").toExternalForm
   private val tabPaneURL = getClass.getResource("/tab_pane.css").toExternalForm
   private val codeAreaURL = getClass.getResource("/code_area.css").toExternalForm
@@ -22,11 +23,10 @@ class MillApp extends Application {
   override def start(primaryStage: Stage) {
     val mainFrame = new MainFrame(primaryStage)
     val scene = new Scene(mainFrame, 1000, 600)
-    scene.getStylesheets.addAll(stylesURL, scrollbarsURL, tabPaneURL, codeAreaURL)
+    scene.getStylesheets.addAll(stylesURL, dialogURL, scrollbarsURL, tabPaneURL, codeAreaURL)
 
     primaryStage.setTitle("mill - simple developer editor")
     primaryStage.setScene(scene)
-    primaryStage.setAlwaysOnTop(true)
     primaryStage.show()
   }
 }

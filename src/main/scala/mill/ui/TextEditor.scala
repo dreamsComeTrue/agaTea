@@ -110,6 +110,10 @@ class TextEditor(val tabName: String, val text: String, val path: String) extend
     codeAreaVirtual.getContent.replaceText(0, codeAreaVirtual.getContent.getLength, text)
   }
 
+  def getText: String = {
+    codeAreaVirtual.getContent.getText()
+  }
+
   private def computeHighlightingAsync: Task[StyleSpans[util.Collection[String]]] = {
     val text = codeAreaVirtual.getContent.getText()
     val task = new Task[StyleSpans[util.Collection[String]]]() {

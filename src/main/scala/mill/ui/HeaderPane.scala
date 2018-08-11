@@ -2,11 +2,12 @@
 
 package mill.ui
 
+import java.io.{BufferedWriter, File, FileWriter}
+
 import javafx.event.ActionEvent
 import javafx.scene.control.{Button, Tooltip}
 import javafx.scene.layout.AnchorPane
-
-import scala.io.Source
+import mill.FxDialogs
 
 class HeaderPane(val mainFrame: MainFrame) extends AnchorPane {
   this.setMinHeight(45)
@@ -34,9 +35,10 @@ class HeaderPane(val mainFrame: MainFrame) extends AnchorPane {
     openButton.relocate(40, 7)
 
     openButton.setOnAction((_: ActionEvent) => {
-      val file = mainFrame.openFileDialog()
+      val file = mainFrame.getFileDialog("Open file")
 
       if (file != null) {
+        mainFrame.filePath = file.getParent
         mainFrame.contentPane.addTab(file)
       }
     })
@@ -50,13 +52,21 @@ class HeaderPane(val mainFrame: MainFrame) extends AnchorPane {
     saveButton.setTooltip(new Tooltip("Save file"))
     saveButton.relocate(75, 7)
 
+    FxDialogs.showInformation("asdaD", "Aasdasd")
+
     saveButton.setOnAction((_: ActionEvent) => {
-      val file = mainFrame.openFileDialog()
+      val file = mainFrame.getFileDialog("Save file")
 
-      if (file != null) {
-        val text = Source.fromFile(file)
+      if (file != null &&
+        FxDialogs.showConfirm("Overwrite file?", "Are you sure to overwrite this file?",
+          FxDialogs.YES, FxDialogs.NO).equals(FxDialogs.YES)) {
+        mainFrame.filePath = file.getParent
 
-        mainFrame.contentPane.addTab(file.getName, text.mkString)
+        val text: String = mainFrame.contentPane.getCurrentTextEditor.getText
+        val fileToWrite = new File(file.getCanonicalPath)
+        val bw = new BufferedWriter(new FileWriter(fileToWrite))
+        bw.write(text)
+        bw.close()
       }
     })
 

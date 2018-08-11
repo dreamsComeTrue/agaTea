@@ -15,7 +15,7 @@ class ContentPane(val mainFrame: MainFrame) extends StackPane {
   setId("center-pane")
   createLogo()
 
-  private var tabPane = createTabPane()
+  private val tabPane = createTabPane()
 
   private def createLogo() = {
     val label = new Label("mill")
@@ -70,6 +70,12 @@ class ContentPane(val mainFrame: MainFrame) extends StackPane {
     val text = Source.fromFile(file).mkString
 
     addTab(header, text, file.getAbsolutePath)
+  }
+
+  def getCurrentTextEditor: TextEditor = {
+    val selectedTab = tabPane.getSelectionModel.getSelectedItem
+
+    selectedTab.getContent.asInstanceOf[TextEditor]
   }
 
 }
