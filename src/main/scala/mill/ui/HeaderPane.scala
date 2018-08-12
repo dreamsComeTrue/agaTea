@@ -52,8 +52,6 @@ class HeaderPane(val mainFrame: MainFrame) extends AnchorPane {
     saveButton.setTooltip(new Tooltip("Save file"))
     saveButton.relocate(75, 7)
 
-    FxDialogs.showInformation("asdaD", "Aasdasd")
-
     saveButton.setOnAction((_: ActionEvent) => {
       val file = mainFrame.getFileDialog("Save file")
 

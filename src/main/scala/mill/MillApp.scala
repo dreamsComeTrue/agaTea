@@ -4,6 +4,7 @@ package mill
 
 import javafx.application.Application
 import javafx.scene.Scene
+import javafx.scene.input.{KeyCode, KeyEvent}
 import javafx.stage.Stage
 import mill.ui.MainFrame
 
@@ -24,6 +25,23 @@ class MillApp extends Application {
     val mainFrame = new MainFrame(primaryStage)
     val scene = new Scene(mainFrame, 1000, 600)
     scene.getStylesheets.addAll(stylesURL, dialogURL, scrollbarsURL, tabPaneURL, codeAreaURL)
+
+    scene.addEventFilter(KeyEvent.KEY_PRESSED,
+      (event: KeyEvent) => {
+        if (event.isShiftDown) {
+          event.getCode match {
+            case KeyCode.SEMICOLON =>
+              EditorMode.mode.set(EditorMode.COMMAND_MODE)
+            case _ => Unit
+          }
+        } else {
+          event.getCode match {
+            case KeyCode.ESCAPE =>
+              EditorMode.mode.set(EditorMode.NORMAL_MODE)
+            case _ => Unit
+          }
+        }
+      })
 
     primaryStage.setTitle("mill - simple developer editor")
     primaryStage.setScene(scene)

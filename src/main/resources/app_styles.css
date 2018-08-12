@@ -15,6 +15,11 @@
     -fx-text-fill: #989a9d;
 }
 
+#infoText {
+    -fx-background-color: #4e4f51;
+    -fx-text-fill: white;
+}
+
 .button {
     -fx-background-color: #989a9d;
     -fx-min-width: 30px;
