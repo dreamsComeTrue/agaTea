@@ -9,10 +9,11 @@ import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.scene.Node
 import javafx.scene.layout.{AnchorPane, BorderPane}
 import javafx.stage.{FileChooser, Stage}
+import mill.EditorMode
 
 class MainFrame(stage: Stage) extends BorderPane {
   val topPane: AnchorPane = new HeaderPane(this)
-  val bottomPane = new BottomPane()
+  val bottomPane = new FooterPane()
   val contentPane = new ContentPane(this)
   var filePath: String = new File(".").getCanonicalPath
 
@@ -30,10 +31,16 @@ class MainFrame(stage: Stage) extends BorderPane {
       val textEditor = textEditorOpt.get
       val codeArea = textEditor.codeAreaVirtual.getContent
 
+      EditorMode.mode.addListener(new ChangeListener[Number] {
+        override def changed(observableValue: ObservableValue[_ <: Number], t: Number, t1: Number): Unit = {
+          if (t1.intValue() == EditorMode.NORMAL_MODE) codeArea.requestFocus()
+        }
+      })
+
       setFocus(codeArea)
 
       def changeFunc(): Unit = {
-        bottomPane.changeInfoLabel(if (textEditor.path != "") textEditor.path else textEditor.tabName)
+        bottomPane.changeInfoText(if (textEditor.path != "") textEditor.path else textEditor.tabName)
         bottomPane.changedPosLabel(codeArea.getCaretColumn + 1, codeArea.getCaretSelectionBind.getParagraphIndex + 1)
       }
 
@@ -45,7 +52,7 @@ class MainFrame(stage: Stage) extends BorderPane {
         }
       })
     } else {
-      bottomPane.changeInfoLabel("")
+      bottomPane.changeInfoText("")
       bottomPane.changedPosLabel(0, 0)
     }
   }
