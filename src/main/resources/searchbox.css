@@ -1,0 +1,67 @@
+/* Copyright 2018 Dominik 'dreamsComeTrue' Jasiński. All Rights Reserved. */
+
+.search-box .text-field
+{
+    -fx-background-color: rgb(80, 80, 80);
+    -fx-background-insets: 1;
+    -fx-background-radius: 15;
+    -fx-padding: -10 5 -11 0;
+    -fx-border-image-source: url("./icons/search-box.png");
+    -fx-border-image-slice: 12 12 12 22 fill;
+    -fx-border-image-width: 10 10 10 22;
+    -fx-border-image-repeat: stretch;
+    -fx-font-size: 12px;
+    -fx-prompt-text-fill: rgb(160, 160, 160);
+}
+
+.search-box .text-field:focused
+{
+   // -fx-background-color: rgb(120, 120, 120);
+    -fx-text-fill: rgb(180, 180, 180);
+    -fx-background-insets: -1.4, 1;
+    -fx-background-radius: 14.4;
+}
+
+.search-box .button
+{
+    -fx-background-color: null;
+    -fx-background-image: url("./icons/search-clear.png");
+}
+
+.search-box .button:hover
+{
+    -fx-background-image: url("./icons/search-clear-over.png");
+}
+
+.search-menu-item-popup-region { -fx-opacity: 0; }
+.search-menu-item:hover .search-menu-item-popup-region , .search-menu-item:focused .search-menu-item-popup-region
+{
+    -fx-opacity: 100%;
+}
+
+.search-menu-item
+{
+    -fx-border-color: transparent transparent transparent #bbbbbb;
+    -fx-border-insets: 0 0 0 69;
+    -fx-padding: 4 5 4 -64;
+}
+
+#search-info-box
+{
+    -fx-padding: -30 -6 -8 -2;
+    -fx-border-image-source: url("./icons/info-tooltip.png");
+    -fx-border-image-slice: 34 20 12 12 fill;
+    -fx-border-image-width: 34 20 12 12;
+    -fx-border-image-repeat: stretch;
+}
+
+#search-info-name
+{
+    -fx-text-fill: white;
+}
+
+#search-info-description
+{
+    -fx-padding: 5 0 5 0;
+    -fx-text-fill: white;
+}

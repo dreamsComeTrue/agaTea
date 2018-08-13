@@ -6,16 +6,64 @@ import java.io.File
 
 import javafx.application.Platform
 import javafx.beans.value.{ChangeListener, ObservableValue}
-import javafx.scene.Node
-import javafx.scene.layout.{AnchorPane, BorderPane}
+import javafx.scene.input.{KeyCode, KeyEvent}
+import javafx.scene.layout.{BorderPane, GridPane, StackPane}
+import javafx.scene.{Node, Scene}
 import javafx.stage.{FileChooser, Stage}
 import mill.EditorMode
+import mill.controller.AppController
 
-class MainFrame(stage: Stage) extends BorderPane {
-  val topPane: AnchorPane = new HeaderPane(this)
+class MainContent(stage: Stage) extends BorderPane {
+  private val stylesURL = getClass.getResource("/app_styles.css").toExternalForm
+  private val dialogURL = getClass.getResource("/dialog_styles.css").toExternalForm
+  private val scrollbarsURL = getClass.getResource("/scrollbars.css").toExternalForm
+  private val tabPaneURL = getClass.getResource("/tab_pane.css").toExternalForm
+  private val codeAreaURL = getClass.getResource("/code_area.css").toExternalForm
+  private val searchBoxURL = getClass.getResource("/searchbox.css").toExternalForm
+
+  private val windowSwitcher: WindowSwitcher = new WindowSwitcher
+  var scene: Scene = _
+  val topPane: GridPane = new HeaderPane(this)
   val bottomPane = new FooterPane()
-  val contentPane = new ContentPane(this)
+  val centerPane: StackPane = createCenterPane()
   var filePath: String = new File(".").getCanonicalPath
+
+  init()
+
+  def init(): Unit = {
+    scene = new Scene(this, 1000, 600)
+    scene.getStylesheets.addAll(stylesURL, dialogURL, scrollbarsURL, tabPaneURL, codeAreaURL, searchBoxURL)
+
+    scene.addEventFilter(KeyEvent.KEY_PRESSED,
+      (event: KeyEvent) => {
+        if (event.isShiftDown) {
+          event.getCode match {
+            case KeyCode.SEMICOLON =>
+              EditorMode.mode.set(EditorMode.COMMAND_MODE)
+            case _ => Unit
+          }
+        } else {
+          event.getCode match {
+            case KeyCode.ESCAPE =>
+              EditorMode.mode.set(EditorMode.NORMAL_MODE)
+            case _ => Unit
+          }
+        }
+      })
+
+    AppController.initialize(this)
+  }
+
+  def createCenterPane(): StackPane = {
+    val centerPane = new StackPane
+
+    val contentPane = new ContentPane(this)
+    contentPane.addTab("new_file", "")
+
+    centerPane.getChildren.addAll(contentPane, windowSwitcher)
+
+    centerPane
+  }
 
   def setFocus(node: Node): Unit = {
     Platform.runLater(() => {
@@ -67,11 +115,9 @@ class MainFrame(stage: Stage) extends BorderPane {
 
   setTop(topPane)
   setBottom(bottomPane)
-  setCenter(contentPane)
+  setCenter(centerPane)
 
   assignCurrentTextEditor(None)
-
-  contentPane.addTab("new_file", "")
 
   //topPane.setMinHeight(1)
   //topPane.setMaxHeight(1)
