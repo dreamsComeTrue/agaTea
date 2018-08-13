@@ -22,13 +22,6 @@
 
 .button {
     -fx-background-color: #989a9d;
-    -fx-min-width: 30px;
-    -fx-min-height: 30px;
-    -fx-max-width: 30px;
-    -fx-max-height: 30px;
-    -fx-background-size: 25px 25px;
-    -fx-background-repeat: no-repeat;
-    -fx-background-position: center 3px;
 }
 
 .button:hover {
@@ -37,20 +30,6 @@
 
 .button:armed {
     -fx-background-color: #e7e9ee;
-}
-
-#new-button {
-    -fx-background-image: url("/icons/new.png");
-}
-
-#open-button {
-    -fx-background-image: url("/icons/open.png");
-}
-
-#save-button {
-    -fx-background-image: url("/icons/save.png");
-    -fx-background-position: center 4px;
-    -fx-background-size: 23px 23px;
 }
 
 /*.buttonStyle {*/

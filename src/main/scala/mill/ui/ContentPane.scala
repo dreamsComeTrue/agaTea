@@ -11,7 +11,7 @@ import javafx.scene.layout._
 
 import scala.io.Source
 
-class ContentPane(val mainFrame: MainFrame) extends StackPane {
+class ContentPane(val mainFrame: MainContent) extends StackPane {
   setId("center-pane")
   createLogo()
 
