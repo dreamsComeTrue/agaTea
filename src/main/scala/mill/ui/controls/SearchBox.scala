@@ -31,8 +31,8 @@ class SearchBox() extends Region {
   def init(): Unit = {
     setId("search-box")
     getStyleClass.add("search-box")
-    setPrefSize(160, 20)
-    setMaxHeight(20)
+    setPrefSize(160, 26)
+    setMaxHeight(26)
 
     textBox = new TextField
     textBox.setPromptText("Search")
@@ -209,7 +209,7 @@ class SearchBox() extends Region {
 
   override protected def layoutChildren(): Unit = {
     textBox.resize(getWidth, getHeight)
-    clearButton.resizeRelocate(getWidth - 18, 4, 12, 13)
+    clearButton.resizeRelocate(getWidth - 18, 6, 12, 13)
   }
 
   def setPromptText(text: String): Unit = {

@@ -47,6 +47,8 @@ class HeaderPane(val mainFrame: MainContent) extends GridPane {
     val openButton = createOpenResourceButton
     val saveButton = createSaveButton
 
+    HBox.setMargin(openButton, new Insets(0, 0, 0, 3))
+    HBox.setMargin(saveButton, new Insets(0, 0, 0, 3))
     generalToolbar = new HBox(newEditorButton, openButton, saveButton)
     generalToolbar.setAlignment(Pos.CENTER)
     generalToolbar.setPadding(new Insets(0, 0, 0, 15))
@@ -55,8 +57,103 @@ class HeaderPane(val mainFrame: MainContent) extends GridPane {
   private def createBuildToolbar(): Unit = {
     val compileButton = createCompileButton
     val debugButton = createDebugButton
+    HBox.setMargin(debugButton, new Insets(0, 0, 0, 3))
     buildToolbar = new HBox(compileButton, debugButton)
     buildToolbar.setAlignment(Pos.CENTER)
+  }
+
+  private def createMiscToolbar(): Unit = {
+    val image3DView = new Image(Utilities.getResource(Resources.Images.IMAGE_STRUCTURE_VIEW))
+    val imageProject = new Image(Utilities.getResource(Resources.Images.IMAGE_PROJECT_VIEW))
+    val imageViewView = new ImageView(imageProject)
+    imageViewView.setFitHeight(20)
+    imageViewView.setFitWidth(20)
+
+    val projectTooltip = new Tooltip(Resources.SET_PROJECT_MODE)
+    val structureTooltip = new Tooltip(Resources.SET_STRUCTURE_MODE)
+
+    viewButton = new ToggleButton("", imageViewView)
+    viewButton.setMaxSize(buttonSize, buttonSize)
+    viewButton.setPrefSize(buttonSize, buttonSize)
+    viewButton.setMinSize(buttonSize, buttonSize)
+    viewButton.setFocusTraversable(false)
+    viewButton.setTooltip(structureTooltip)
+
+    imageViewView.fitWidthProperty.bind(Bindings.subtract(viewButton.widthProperty, buttonPadding))
+    imageViewView.fitHeightProperty.bind(Bindings.subtract(viewButton.heightProperty, buttonPadding))
+    viewButton.setOnAction((_: ActionEvent) => {
+      val controller = AppController.instance()
+
+      if (viewButton.isSelected) {
+        imageViewView.setImage(image3DView)
+        viewButton.setTooltip(projectTooltip)
+      }
+      else {
+        imageViewView.setImage(imageProject)
+        viewButton.setTooltip(structureTooltip)
+      }
+    })
+    viewButton.selectedProperty.addListener(new ChangeListener[lang.Boolean] {
+      override def changed(observableValue: ObservableValue[_ <: lang.Boolean], oldValue: lang.Boolean, newValue: lang.Boolean): Unit = {
+        if (viewButton.isSelected) imageViewView.setImage(image3DView)
+        else imageViewView.setImage(imageProject)
+      }
+    })
+
+    val settingsButton = Utilities.createButton(Resources.Images.IMAGE_SETTINGS, buttonSize, buttonPadding)
+    settingsButton.setFocusTraversable(false)
+    settingsButton.setOnAction((_: ActionEvent) => null)
+    HBox.setMargin(settingsButton, new Insets(0, 0, 0, 10))
+
+    val imageLayout = new Image(Utilities.getResource(Resources.Images.IMAGE_LAYOUT))
+    val imageLayoutView = new ImageView(imageLayout)
+    imageLayoutView.setFitHeight(10)
+    imageLayoutView.setFitWidth(10)
+
+    val layoutButton = new SlideButton("", imageLayoutView, buttonSize)
+    layoutButton.setHorizontalOrientation(false)
+    layoutButton.setFocusTraversable(false)
+    layoutButton.setPrimaryButtonAction(true)
+    layoutButton.setAlignPos(Pos.BOTTOM_CENTER)
+
+    val projectExplorerButton = Utilities.createToggleButton(Resources.Images.IMAGE_PROJECT_VIEW, buttonSize, buttonPadding)
+    projectExplorerButton.setOnAction((event: ActionEvent) => {
+      val controller = AppController.instance()
+    })
+
+    val outputConsoleButton = Utilities.createToggleButton(Resources.Images.IMAGE_WINDOW, buttonSize, buttonPadding)
+    outputConsoleButton.setOnAction((event: ActionEvent) => {
+      val controller = AppController.instance()
+
+      controller.setConsoleWindowVisible(!controller.getConsoleWindowVisible)
+    })
+
+    AnchorPane.setLeftAnchor(projectExplorerButton, 5.0)
+    AnchorPane.setTopAnchor(projectExplorerButton, 5.0)
+    AnchorPane.setLeftAnchor(outputConsoleButton, 35.0)
+    AnchorPane.setTopAnchor(outputConsoleButton, 5.0)
+
+    val buttonsPane = new AnchorPane(projectExplorerButton, outputConsoleButton)
+    buttonsPane.setStyle("-fx-background-color: rgb(80,80,80);" + "-fx-border-color: rgb(50, 50, 50)")
+    buttonsPane.setPrefWidth(100)
+    buttonsPane.setPrefHeight(200)
+
+    layoutButton.setContent(buttonsPane)
+    imageLayoutView.fitWidthProperty.bind(Bindings.subtract(layoutButton.widthProperty, 8))
+    imageLayoutView.fitHeightProperty.bind(Bindings.subtract(layoutButton.heightProperty, 8))
+
+    quickAccessBox = new SearchBox
+    quickAccessBox.setFocusTraversable(false)
+    quickAccessBox.getTextBox.setPromptText(Resources.QUICK_ACCESS)
+    quickAccessBox.getTextBox.setOnKeyPressed((event: KeyEvent) => {
+    })
+    HBox.setMargin(quickAccessBox, new Insets(0, 10, 0, 0))
+
+    HBox.setMargin(layoutButton, new Insets(0, 0, 0, 3))
+    HBox.setMargin(settingsButton, new Insets(0, 0, 0, 3))
+    miscToolbar = new HBox(quickAccessBox, viewButton, layoutButton, settingsButton)
+    miscToolbar.setAlignment(Pos.CENTER_RIGHT)
+    miscToolbar.setPadding(new Insets(0, 15, 0, 0))
   }
 
   private def createDebugButton = {
@@ -121,7 +218,7 @@ class HeaderPane(val mainFrame: MainContent) extends GridPane {
 
     imageOpenView.fitWidthProperty.bind(Bindings.subtract(openButton.widthProperty, 2))
     imageOpenView.fitHeightProperty.bind(Bindings.subtract(openButton.heightProperty, 2))
-    openButton.setOnAction((event: ActionEvent) => {
+    openButton.setOnAction((_: ActionEvent) => {
       openButton.hide()
 
       val file = mainFrame.getFileDialog("Open file")
@@ -165,95 +262,5 @@ class HeaderPane(val mainFrame: MainContent) extends GridPane {
       }
     })
     saveButton
-  }
-
-  private def createMiscToolbar(): Unit = {
-    val image3DView = new Image(Utilities.getResource(Resources.Images.IMAGE_STRUCTURE_VIEW))
-    val imageProject = new Image(Utilities.getResource(Resources.Images.IMAGE_PROJECT_VIEW))
-    val imageViewView = new ImageView(imageProject)
-    imageViewView.setFitHeight(20)
-    imageViewView.setFitWidth(20)
-
-    val projectTooltip = new Tooltip(Resources.SET_PROJECT_MODE)
-    val structureTooltip = new Tooltip(Resources.SET_STRUCTURE_MODE)
-
-    viewButton = new ToggleButton("", imageViewView)
-    viewButton.setMaxSize(buttonSize, buttonSize)
-    viewButton.setPrefSize(buttonSize, buttonSize)
-    viewButton.setMinSize(buttonSize, buttonSize)
-    viewButton.setFocusTraversable(false)
-    viewButton.setTooltip(structureTooltip)
-
-    imageViewView.fitWidthProperty.bind(Bindings.subtract(viewButton.widthProperty, buttonPadding))
-    imageViewView.fitHeightProperty.bind(Bindings.subtract(viewButton.heightProperty, buttonPadding))
-    viewButton.setOnAction((event: ActionEvent) => {
-      val controller = AppController.instance()
-
-      if (viewButton.isSelected) {
-        imageViewView.setImage(image3DView)
-        viewButton.setTooltip(projectTooltip)
-      }
-      else {
-        imageViewView.setImage(imageProject)
-        viewButton.setTooltip(structureTooltip)
-      }
-    })
-    viewButton.selectedProperty.addListener(new ChangeListener[lang.Boolean] {
-      override def changed(observableValue: ObservableValue[_ <: lang.Boolean], oldValue: lang.Boolean, newValue: lang.Boolean): Unit = {
-        if (viewButton.isSelected) imageViewView.setImage(image3DView)
-        else imageViewView.setImage(imageProject)
-      }
-    })
-
-    val settingsButton = Utilities.createButton(Resources.Images.IMAGE_SETTINGS, buttonSize, buttonPadding)
-    settingsButton.setFocusTraversable(false)
-    settingsButton.setOnAction((_: ActionEvent) => null)
-    HBox.setMargin(settingsButton, new Insets(0, 0, 0, 10))
-
-    val imageLayout = new Image(Utilities.getResource(Resources.Images.IMAGE_LAYOUT))
-    val imageLayoutView = new ImageView(imageLayout)
-    imageLayoutView.setFitHeight(10)
-    imageLayoutView.setFitWidth(10)
-
-    val layoutButton = new SlideButton("", imageLayoutView, buttonSize)
-    layoutButton.setHorizontalOrientation(false)
-    layoutButton.setFocusTraversable(false)
-    layoutButton.setPrimaryButtonAction(true)
-    layoutButton.setAlignPos(Pos.BOTTOM_CENTER)
-
-    val projectExplorerButton = Utilities.createToggleButton(Resources.Images.IMAGE_PROJECT_VIEW, buttonSize, buttonPadding)
-    projectExplorerButton.setOnAction((event: ActionEvent) => {
-      val controller = AppController.instance()
-    })
-
-    val outputConsoleButton = Utilities.createToggleButton(Resources.Images.IMAGE_WINDOW, buttonSize, buttonPadding)
-    outputConsoleButton.setOnAction((event: ActionEvent) => {
-      val controller = AppController.instance()
-    })
-
-    AnchorPane.setLeftAnchor(projectExplorerButton, 5.0)
-    AnchorPane.setTopAnchor(projectExplorerButton, 5.0)
-    AnchorPane.setLeftAnchor(outputConsoleButton, 35.0)
-    AnchorPane.setTopAnchor(outputConsoleButton, 5.0)
-
-    val buttonsPane = new AnchorPane(projectExplorerButton, outputConsoleButton)
-    buttonsPane.setStyle("-fx-background-color: rgb(80,80,80);" + "-fx-border-color: rgb(50, 50, 50)")
-    buttonsPane.setPrefWidth(100)
-    buttonsPane.setPrefHeight(200)
-
-    layoutButton.setContent(buttonsPane)
-    imageLayoutView.fitWidthProperty.bind(Bindings.subtract(layoutButton.widthProperty, 8))
-    imageLayoutView.fitHeightProperty.bind(Bindings.subtract(layoutButton.heightProperty, 8))
-
-    quickAccessBox = new SearchBox
-    quickAccessBox.setFocusTraversable(false)
-    quickAccessBox.getTextBox.setPromptText(Resources.QUICK_ACCESS)
-    quickAccessBox.getTextBox.setOnKeyPressed((event: KeyEvent) => {
-    })
-    HBox.setMargin(quickAccessBox, new Insets(0, 10, 0, 0))
-
-    miscToolbar = new HBox(quickAccessBox, viewButton, layoutButton, settingsButton)
-    miscToolbar.setAlignment(Pos.CENTER_RIGHT)
-    miscToolbar.setPadding(new Insets(0, 15, 0, 0))
   }
 }

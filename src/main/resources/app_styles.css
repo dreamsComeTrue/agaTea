@@ -32,6 +32,12 @@
     -fx-background-color: #e7e9ee;
 }
 
+.text-field
+{
+    -fx-background-color: rgb(80, 80, 80);
+    -fx-text-fill: white;
+}
+
 /*.buttonStyle {*/
 /*-fx-text-fill: #006464;*/
 /*-fx-background-color: #DFB951;*/

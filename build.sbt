@@ -8,7 +8,7 @@ scalaVersion := "2.12.6"
 scalacOptions ++= Seq("-unchecked", "-deprecation", "-Xcheckinit", "-encoding", "utf8", "-feature")
 
 libraryDependencies += "org.fxmisc.richtext" % "richtextfx" % "0.9.1"
-libraryDependencies += "org.controlsfx" % "controlsfx" % "9.0.0"
+libraryDependencies += "org.controlsfx" % "controlsfx" % "8.40.14"
 libraryDependencies += "org.apache.commons" % "commons-lang3" % "3.7"
 libraryDependencies += "commons-io" % "commons-io" % "2.6"
 

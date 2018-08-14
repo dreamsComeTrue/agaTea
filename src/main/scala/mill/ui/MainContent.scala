@@ -12,27 +12,31 @@ import javafx.scene.{Node, Scene}
 import javafx.stage.{FileChooser, Stage}
 import mill.EditorMode
 import mill.controller.AppController
+import mill.ui.views.ProjectView
 
 class MainContent(stage: Stage) extends BorderPane {
   private val stylesURL = getClass.getResource("/app_styles.css").toExternalForm
   private val dialogURL = getClass.getResource("/dialog_styles.css").toExternalForm
+  private val splitPaneURL = getClass.getResource("/split_pane.css").toExternalForm
   private val scrollbarsURL = getClass.getResource("/scrollbars.css").toExternalForm
   private val tabPaneURL = getClass.getResource("/tab_pane.css").toExternalForm
   private val codeAreaURL = getClass.getResource("/code_area.css").toExternalForm
   private val searchBoxURL = getClass.getResource("/searchbox.css").toExternalForm
 
+  private val styles = List(stylesURL, dialogURL, splitPaneURL, scrollbarsURL, tabPaneURL, codeAreaURL, searchBoxURL)
+
   private val windowSwitcher: WindowSwitcher = new WindowSwitcher
   var scene: Scene = _
-  val topPane: GridPane = new HeaderPane(this)
-  val bottomPane = new FooterPane()
-  val centerPane: StackPane = createCenterPane()
+  var topPane: GridPane = _
+  var bottomPane: FooterPane = _
+  var centerPane: StackPane = _
   var filePath: String = new File(".").getCanonicalPath
 
   init()
 
   def init(): Unit = {
     scene = new Scene(this, 1000, 600)
-    scene.getStylesheets.addAll(stylesURL, dialogURL, scrollbarsURL, tabPaneURL, codeAreaURL, searchBoxURL)
+    scene.getStylesheets.addAll(styles: _*)
 
     scene.addEventFilter(KeyEvent.KEY_PRESSED,
       (event: KeyEvent) => {
@@ -52,16 +56,20 @@ class MainContent(stage: Stage) extends BorderPane {
       })
 
     AppController.initialize(this)
+
+    topPane = new HeaderPane(this)
+    bottomPane = new FooterPane()
+    centerPane = createCenterPane()
   }
 
   def createCenterPane(): StackPane = {
     val centerPane = new StackPane
 
-    val contentPane = new ContentPane(this)
-    contentPane.addTab("new_file", "")
+    val projectView = ProjectView.initialize()
+    projectView.setPrefWidth(Double.MaxValue)
+    projectView.setPrefHeight(Double.MaxValue)
 
-    centerPane.getChildren.addAll(contentPane, windowSwitcher)
-
+    centerPane.getChildren.addAll(projectView, windowSwitcher)
     centerPane
   }
 
@@ -122,5 +130,3 @@ class MainContent(stage: Stage) extends BorderPane {
   //topPane.setMinHeight(1)
   //topPane.setMaxHeight(1)
 }
-
-

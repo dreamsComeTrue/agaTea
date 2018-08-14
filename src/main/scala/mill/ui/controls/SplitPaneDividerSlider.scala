@@ -55,7 +55,7 @@ class SplitPaneDividerSlider(val splitPane: SplitPane, val dividerIndex: Int, va
 
     recomputeSize()
 
-    aimContentVisibleProperty.addListener(new ChangeListener[lang.Boolean] {
+    getAimContentVisibleProperty.addListener(new ChangeListener[lang.Boolean] {
       override def changed(observableValue: ObservableValue[_ <: lang.Boolean], oldValue: lang.Boolean, newValue: lang.Boolean): Unit = {
         if (!newValue) {
           // store divider position before transition:
@@ -100,7 +100,7 @@ class SplitPaneDividerSlider(val splitPane: SplitPane, val dividerIndex: Int, va
   def getLastDividerPosition: Double = lastDividerPositionProperty.get
 
   def setLastDividerPosition(lastDividerPosition: Double): Unit = {
-    lastDividerPositionProperty.set(lastDividerPosition)
+    getLastDividerPositionProperty.set(lastDividerPosition)
   }
 
   def getCurrentDividerPositionProperty: DoubleProperty = {
@@ -111,7 +111,7 @@ class SplitPaneDividerSlider(val splitPane: SplitPane, val dividerIndex: Int, va
   def getCurrentDividerPosition: Double = currentDividerPositionProperty.get
 
   def setCurrentDividerPosition(currentDividerPosition: Double): Unit = {
-    currentDividerPositionProperty.set(currentDividerPosition)
+    getCurrentDividerPositionProperty.set(currentDividerPosition)
     dividerToMove.setPosition(currentDividerPosition)
   }
 

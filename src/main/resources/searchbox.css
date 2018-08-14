@@ -3,11 +3,10 @@
 .search-box .text-field
 {
     -fx-background-color: rgb(80, 80, 80);
-    -fx-background-insets: 1;
     -fx-background-radius: 15;
-    -fx-padding: -10 5 -11 0;
+    -fx-padding: -10 5 -10 0;
     -fx-border-image-source: url("./icons/search-box.png");
-    -fx-border-image-slice: 12 12 12 22 fill;
+    -fx-border-image-slice: 10 10 10 22 fill;
     -fx-border-image-width: 10 10 10 22;
     -fx-border-image-repeat: stretch;
     -fx-font-size: 12px;
@@ -16,7 +15,6 @@
 
 .search-box .text-field:focused
 {
-   // -fx-background-color: rgb(120, 120, 120);
     -fx-text-fill: rgb(180, 180, 180);
     -fx-background-insets: -1.4, 1;
     -fx-background-radius: 14.4;
