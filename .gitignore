@@ -1,2 +1,8 @@
 *.class
 *.log
+
+src/main/resources/logo.ase
+
+.idea/
+project/
+target/
