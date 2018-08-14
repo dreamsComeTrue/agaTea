@@ -9,7 +9,7 @@ import javafx.beans.binding.Bindings
 import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.event.ActionEvent
 import javafx.geometry.{HPos, Insets, Pos}
-import javafx.scene.control.{Button, ComboBox, ToggleButton, Tooltip}
+import javafx.scene.control.{ToggleButton, Tooltip}
 import javafx.scene.image.{Image, ImageView}
 import javafx.scene.input.KeyEvent
 import javafx.scene.layout._
@@ -36,7 +36,7 @@ class HeaderPane(val mainFrame: MainContent) extends GridPane {
     this.setMinHeight(45)
 
     createGeneralToolbar()
-    createBuildToolbar ()
+    createBuildToolbar()
     createMiscToolbar()
     layoutToolbars()
     assignColumnConstraints()
@@ -102,7 +102,7 @@ class HeaderPane(val mainFrame: MainContent) extends GridPane {
 
     val settingsButton = Utilities.createButton(Resources.Images.IMAGE_SETTINGS, buttonSize, buttonPadding)
     settingsButton.setFocusTraversable(false)
-    settingsButton.setOnAction((_: ActionEvent) => null)
+    settingsButton.setOnAction((_: ActionEvent) => {})
     HBox.setMargin(settingsButton, new Insets(0, 0, 0, 10))
 
     val imageLayout = new Image(Utilities.getResource(Resources.Images.IMAGE_LAYOUT))

@@ -37,7 +37,6 @@ class MainContent(stage: Stage) extends BorderPane {
   def init(): Unit = {
     scene = new Scene(this, 1000, 600)
     scene.getStylesheets.addAll(styles: _*)
-
     scene.addEventFilter(KeyEvent.KEY_PRESSED,
       (event: KeyEvent) => {
         if (event.isShiftDown) {
