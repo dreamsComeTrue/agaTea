@@ -38,6 +38,11 @@
     -fx-text-fill: white;
 }
 
+.window-header
+{
+    -fx-background-color: rgb(50, 50, 50);
+}
+
 /*.buttonStyle {*/
 /*-fx-text-fill: #006464;*/
 /*-fx-background-color: #DFB951;*/
@@ -45,3 +50,24 @@
 /*-fx-background-radius: 20;*/
 /*-fx-padding: 5;*/
 /*}*/
+
+
+.class-object
+{
+    -fx-font-size: 15;
+}
+
+.method-slot-type
+{
+    -fx-fill: lightblue;
+}
+
+.method-slot-name
+{
+    -fx-fill: rgb(210, 210, 210);
+}
+
+.method-slot-identifier
+{
+    -fx-fill: lightgreen;
+}

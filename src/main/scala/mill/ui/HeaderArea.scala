@@ -13,11 +13,11 @@ import javafx.scene.control.{ToggleButton, Tooltip}
 import javafx.scene.image.{Image, ImageView}
 import javafx.scene.input.KeyEvent
 import javafx.scene.layout._
-import mill.controller.AppController
+import mill.controller.{AppController, FlowState}
 import mill.ui.controls.{SearchBox, SlideButton}
 import mill.{FxDialogs, Resources, Utilities}
 
-class HeaderPane(val mainFrame: MainContent) extends GridPane {
+class HeaderArea private() extends GridPane {
   private val buttonSize = 25
   private val buttonPadding = 6
 
@@ -32,7 +32,7 @@ class HeaderPane(val mainFrame: MainContent) extends GridPane {
 
   init()
 
-  def init(): Unit = {
+  private def init(): Unit = {
     this.setMinHeight(45)
 
     createGeneralToolbar()
@@ -82,13 +82,15 @@ class HeaderPane(val mainFrame: MainContent) extends GridPane {
     imageViewView.fitWidthProperty.bind(Bindings.subtract(viewButton.widthProperty, buttonPadding))
     imageViewView.fitHeightProperty.bind(Bindings.subtract(viewButton.heightProperty, buttonPadding))
     viewButton.setOnAction((_: ActionEvent) => {
-      val controller = AppController.instance()
-
       if (viewButton.isSelected) {
+        AppController.instance().setFlowState(FlowState.APPLICATION_STRUCTURE)
+
         imageViewView.setImage(image3DView)
         viewButton.setTooltip(projectTooltip)
       }
       else {
+        AppController.instance().setFlowState(FlowState.APPLICATION_PROJECT)
+
         imageViewView.setImage(imageProject)
         viewButton.setTooltip(structureTooltip)
       }
@@ -102,7 +104,10 @@ class HeaderPane(val mainFrame: MainContent) extends GridPane {
 
     val settingsButton = Utilities.createButton(Resources.Images.IMAGE_SETTINGS, buttonSize, buttonPadding)
     settingsButton.setFocusTraversable(false)
-    settingsButton.setOnAction((_: ActionEvent) => {})
+    settingsButton.setOnAction((_: ActionEvent) => {
+      AppController.instance().setFlowState(FlowState.SETTINGS)
+    })
+
     HBox.setMargin(settingsButton, new Insets(0, 0, 0, 10))
 
     val imageLayout = new Image(Utilities.getResource(Resources.Images.IMAGE_LAYOUT))
@@ -117,15 +122,13 @@ class HeaderPane(val mainFrame: MainContent) extends GridPane {
     layoutButton.setAlignPos(Pos.BOTTOM_CENTER)
 
     val projectExplorerButton = Utilities.createToggleButton(Resources.Images.IMAGE_PROJECT_VIEW, buttonSize, buttonPadding)
-    projectExplorerButton.setOnAction((event: ActionEvent) => {
-      val controller = AppController.instance()
+    projectExplorerButton.setOnAction((_: ActionEvent) => {
+      AppController.instance().setProjectExplorerVisible(!AppController.instance().getProjectExplorerVisible)
     })
 
     val outputConsoleButton = Utilities.createToggleButton(Resources.Images.IMAGE_WINDOW, buttonSize, buttonPadding)
-    outputConsoleButton.setOnAction((event: ActionEvent) => {
-      val controller = AppController.instance()
-
-      controller.setConsoleWindowVisible(!controller.getConsoleWindowVisible)
+    outputConsoleButton.setOnAction((_: ActionEvent) => {
+      AppController.instance().setConsoleWindowVisible(!AppController.instance().getConsoleWindowVisible)
     })
 
     AnchorPane.setLeftAnchor(projectExplorerButton, 5.0)
@@ -145,12 +148,13 @@ class HeaderPane(val mainFrame: MainContent) extends GridPane {
     quickAccessBox = new SearchBox
     quickAccessBox.setFocusTraversable(false)
     quickAccessBox.getTextBox.setPromptText(Resources.QUICK_ACCESS)
-    quickAccessBox.getTextBox.setOnKeyPressed((event: KeyEvent) => {
+    quickAccessBox.getTextBox.setOnKeyPressed((_: KeyEvent) => {
     })
-    HBox.setMargin(quickAccessBox, new Insets(0, 10, 0, 0))
 
+    HBox.setMargin(quickAccessBox, new Insets(0, 10, 0, 0))
     HBox.setMargin(layoutButton, new Insets(0, 0, 0, 3))
     HBox.setMargin(settingsButton, new Insets(0, 0, 0, 3))
+
     miscToolbar = new HBox(quickAccessBox, viewButton, layoutButton, settingsButton)
     miscToolbar.setAlignment(Pos.CENTER_RIGHT)
     miscToolbar.setPadding(new Insets(0, 15, 0, 0))
@@ -221,12 +225,7 @@ class HeaderPane(val mainFrame: MainContent) extends GridPane {
     openButton.setOnAction((_: ActionEvent) => {
       openButton.hide()
 
-      val file = mainFrame.getFileDialog("Open file")
-
-      if (file != null) {
-        mainFrame.filePath = file.getParent
-        AppController.instance().addTab(file)
-      }
+      AppController.instance().setFlowState(FlowState.OPEN_RESOURCE)
     })
 
     openButton
@@ -247,12 +246,12 @@ class HeaderPane(val mainFrame: MainContent) extends GridPane {
     saveAllButton.setOnAction((_: ActionEvent) => saveButton.hide())
     saveButton.setContent(saveAllButton)
     saveButton.setOnAction((_: ActionEvent) => {
-      val file = mainFrame.getFileDialog("Save file")
+      val file = AppController.instance().mainContent.getFileDialog("Save file")
 
       if (file != null &&
         FxDialogs.showConfirm("Overwrite file?", "Are you sure to overwrite this file?",
           FxDialogs.YES, FxDialogs.NO).equals(FxDialogs.YES)) {
-        mainFrame.filePath = file.getParent
+        AppController.instance().mainContent.filePath = file.getParent
 
         val text = AppController.instance().getCurrentTextEditor.getText
         val fileToWrite = new File(file.getCanonicalPath)
@@ -262,5 +261,20 @@ class HeaderPane(val mainFrame: MainContent) extends GridPane {
       }
     })
     saveButton
+  }
+
+  def switchView(projectView: Boolean): Unit = {
+    viewButton.setSelected(!projectView)
+  }
+
+}
+
+object HeaderArea {
+  private var _instance: HeaderArea = _
+
+  def instance(): HeaderArea = {
+    if (_instance == null) _instance = new HeaderArea()
+
+    _instance
   }
 }

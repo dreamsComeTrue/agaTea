@@ -7,12 +7,33 @@ import java.io.File
 import javafx.animation.{Animation, KeyFrame, Timeline}
 import javafx.application.Platform
 import javafx.event.ActionEvent
+import javafx.scene.Node
+import javafx.scene.layout.Pane
 import javafx.util.Duration
-import mill.ui.{EditorArea, MainContent, TextEditor}
+import mill.controller.FlowState.FlowState
+import mill.resources.Resource
+import mill.resources.settings.ApplicationSettings
+import mill.ui.views.ProjectView
+import mill.ui.{EditorArea, FooterArea, MainContent, TextEditor}
 
 import scala.collection.mutable.ListBuffer
 
 class AppController private(val mainContent: MainContent) {
+  def closeResourceInEditor(path: String): Unit = ???
+
+  def showContentBar(imageName: String, content: Pane, initialFocus: Node): Unit = {
+  }
+
+  def setContentBarHeight(i: Int) = ???
+
+  def hideContentBar(): Unit = ???
+
+  def showNotification(SELECT_ONE_OF_RESOURCES: String) = ???
+
+  def openResourceInEditor(fileName: String, filePath: String, resource: Resource) = ???
+
+  def focusEditor(filePath: String): Boolean = ???
+
   private var scheduler: Timeline = _
   private var stageInitializers = new ListBuffer[FXStageInitializer]()
 
@@ -58,6 +79,40 @@ class AppController private(val mainContent: MainContent) {
   def setConsoleWindowVisible(visible: Boolean): Unit = {
     EditorArea.instance().setConsoleWindowVisible(visible)
   }
+
+  def setFlowState(state: FlowState): Unit = {
+    StateManager.instance().setActualState(state)
+  }
+
+  def switchToLastState(): Unit = {
+    StateManager.instance().switchToLastState()
+  }
+
+  def setFooterMessageText(text: String): Unit = {
+    FooterArea.instance().setInfoText(text)
+  }
+
+  def bindStateManager(): Unit = {
+    StateManager.instance().bindStates()
+  }
+
+  def getProjectExplorerVisible: Boolean = ProjectView.instance().isProjectExplorerVisible
+
+  def setProjectExplorerVisible(visible: Boolean): Unit = {
+    ProjectView.instance().setProjectExplorerVisible(visible)
+  }
+
+  def switchProductiveMode(showMaximized: Boolean): Unit = {
+    ApplicationSettings.instance().setProductiveMode(showMaximized)
+
+    setProjectExplorerVisible(!showMaximized)
+    setConsoleWindowVisible(!showMaximized)
+
+    mainContent.setHeaderAreaVisible(!showMaximized)
+  }
+
+  def isProductiveMode: Boolean = ApplicationSettings.instance().getProductiveMode
+
 }
 
 object AppController {

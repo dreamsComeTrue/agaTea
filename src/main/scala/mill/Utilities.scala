@@ -2,14 +2,17 @@
 
 package mill
 
-import java.io.InputStream
-import java.{lang, util}
+import java.io.{File, IOException, InputStream}
+import java.lang
 
 import javafx.beans.binding.Bindings
 import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.scene.control._
 import javafx.scene.image.{Image, ImageView}
+import mill.resources.ResourceHandler
 import org.apache.commons.lang3.StringUtils
+
+import scala.collection.mutable.ListBuffer
 
 object Utilities {
   val DEFAULT_IMAGE_PADDING: Double = 4
@@ -18,7 +21,7 @@ object Utilities {
   private val BACKSLASH: Char = '\\'
   private val CLASS_SUFFIX: String = ".class"
   private val BAD_PACKAGE_ERROR: String = "Unable to get resources from path '%s'. Are you sure the given '%s' package exists?"
-  private var imagesMap: util.HashMap[String, Image] = _
+  private var imagesMap = Map[String, Image]()
 
   def createButton(imagePath: String, size: Double, imagePadding: Double): Button = {
     val image: Image = new Image(getResource(imagePath))
@@ -76,10 +79,10 @@ object Utilities {
 
     var image: Image = null
 
-    if (imagesMap.containsKey(imagePath)) image = imagesMap.get(imagePath)
+    if (imagesMap.contains(imagePath)) image = imagesMap(imagePath)
     else {
       image = new Image(getResource(imagePath))
-      imagesMap.put(imagePath, image)
+      imagesMap += (imagePath -> image)
     }
 
     val imageView: ImageView = new ImageView(image)
@@ -89,5 +92,89 @@ object Utilities {
     imageView
   }
 
+  private def find(file: File, scannedPackage: String): List[Class[_]] = {
+    val classes = ListBuffer[Class[_]]()
+
+    if (file.isDirectory) {
+      for (nestedFile <- file.listFiles) {
+        var path = nestedFile.getAbsolutePath
+        path = path.replace(BACKSLASH, DOT).replace(SLASH, DOT)
+
+        val index = path.indexOf(scannedPackage)
+        val fullPath = path.substring(index)
+
+        classes ++= find(nestedFile, fullPath)
+      }
+      //File names with the $1, $2 holds the anonymous inner classes, we are not interested on them.
+    }
+    else if (scannedPackage.endsWith(CLASS_SUFFIX) && !scannedPackage.contains("$")) {
+      val beginIndex = 0
+      val endIndex = scannedPackage.length - CLASS_SUFFIX.length
+      val className = scannedPackage.substring(beginIndex, endIndex)
+
+      try
+        classes += Class.forName(className)
+      catch {
+        case _: ClassNotFoundException =>
+      }
+    }
+    else if (scannedPackage.endsWith(CLASS_SUFFIX) && scannedPackage.contains("$")) { //   scannedPackage = scannedPackage.replace ("$", ".");
+      val beginIndex = 0
+      val endIndex = scannedPackage.length - CLASS_SUFFIX.length
+      val className = scannedPackage.substring(beginIndex, endIndex)
+
+      try
+        classes += Class.forName(className)
+      catch {
+        case _: ClassNotFoundException =>
+      }
+    }
+
+    classes.toList
+  }
+
+  def findAllClasses(scannedPackage: String): List[Class[_]] = {
+    val classLoader = Thread.currentThread.getContextClassLoader
+    val scannedPath = scannedPackage.replace(DOT, SLASH)
+    val classes = ListBuffer[Class[_]]()
+
+    try {
+      val resources = classLoader.getResources(scannedPath)
+
+      while (resources.hasMoreElements) {
+        val file = new File(resources.nextElement.getFile)
+        classes ++= find(file, scannedPackage)
+      }
+    }
+    catch {
+      case e: IOException =>
+        throw new IllegalArgumentException(String.format(BAD_PACKAGE_ERROR, scannedPath, scannedPackage), e)
+    }
+
+    classes.toList
+  }
+
+  def getAllResourceClasses: List[Class[_]] = {
+    val allClasses = findAllClasses("mill.resources")
+    val classes = ListBuffer[Class[_]]()
+
+    for (c <- allClasses) {
+      val in = c.getInterfaces
+      for (i <- in) {
+        if (i == classOf[ResourceHandler]) classes += c
+      }
+    }
+
+    classes.toList
+  }
+
   def getResource(name: String): InputStream = Utilities.getClass.getResourceAsStream("/icons/" + name)
+
+  def isValidIdentifier(text: String): Boolean = {
+    for (i <- 0 to text.length) {
+      val c = text.charAt(i)
+      if ((i == 0 && Character.isDigit(c)) || (!Character.isLetterOrDigit(c) && i > 0 && (c != '_'))) return false
+    }
+    true
+  }
 }

@@ -86,7 +86,7 @@ class SplitPaneDividerSlider(val splitPane: SplitPane, val dividerIndex: Int, va
     aimContentVisibleProperty
   }
 
-  def isAimContentVisible: Boolean = aimContentVisibleProperty.get
+  def isAimContentVisible: Boolean = getAimContentVisibleProperty.get
 
   def setAimContentVisible(aimContentVisible: Boolean): Unit = {
     aimContentVisibleProperty.set(aimContentVisible)
@@ -97,7 +97,7 @@ class SplitPaneDividerSlider(val splitPane: SplitPane, val dividerIndex: Int, va
     lastDividerPositionProperty
   }
 
-  def getLastDividerPosition: Double = lastDividerPositionProperty.get
+  def getLastDividerPosition: Double = getLastDividerPositionProperty.get
 
   def setLastDividerPosition(lastDividerPosition: Double): Unit = {
     getLastDividerPositionProperty.set(lastDividerPosition)
@@ -108,7 +108,7 @@ class SplitPaneDividerSlider(val splitPane: SplitPane, val dividerIndex: Int, va
     currentDividerPositionProperty
   }
 
-  def getCurrentDividerPosition: Double = currentDividerPositionProperty.get
+  def getCurrentDividerPosition: Double = getCurrentDividerPositionProperty.get
 
   def setCurrentDividerPosition(currentDividerPosition: Double): Unit = {
     getCurrentDividerPositionProperty.set(currentDividerPosition)
