@@ -5,17 +5,18 @@ package mill.ui
 import java.io.File
 import java.lang
 
+import controls.SlideNotificationBar
 import javafx.application.Platform
 import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.scene.input._
-import javafx.scene.layout.{BorderPane, GridPane, StackPane}
+import javafx.scene.layout.{BorderPane, GridPane, Pane, StackPane}
 import javafx.scene.{Node, Scene}
 import javafx.stage.{FileChooser, Stage}
 import mill.controller.{AppController, ApplicationState}
 import mill.resources.ResourceFactory
 import mill.resources.settings.ApplicationSettings
 import mill.ui.views._
-import mill.{EditorMode, ViewTransition}
+import mill.{EditorMode, Resources, ViewTransition}
 
 import scala.collection.JavaConverters._
 
@@ -44,10 +45,12 @@ class MainContent(stage: Stage) extends BorderPane {
   private var newResourceView: NewResourceView = _
   private var openResourceView: OpenResourceView = _
 
+  private var snb : SlideNotificationBar = _
+
   init()
 
   def init(): Unit = {
-    scene = new Scene(this, 1000, 600)
+    scene = new Scene(this, 1500, 1000)
     scene.getStylesheets.addAll(styles: _*)
     scene.addEventFilter(KeyEvent.KEY_PRESSED,
       (event: KeyEvent) => {
@@ -72,6 +75,8 @@ class MainContent(stage: Stage) extends BorderPane {
     bottomPane = FooterArea.instance()
     centerPane = createCenterPane()
 
+    snb = new SlideNotificationBar(centerPane, null)
+
     fileSelectView = new FileSelectView
     newResourceView = new NewResourceView
     openResourceView = new OpenResourceView
@@ -80,7 +85,7 @@ class MainContent(stage: Stage) extends BorderPane {
 
     setTop(topPane)
     setBottom(bottomPane)
-    setCenter(centerPane)
+    setCenter(snb)
 
     assignCurrentTextEditor(None)
 
@@ -161,7 +166,6 @@ class MainContent(stage: Stage) extends BorderPane {
   def createCenterPane(): StackPane = {
     val centerPane = new StackPane
 
-    ProjectView.initialize()
     ProjectView.instance().setPrefWidth(Double.MaxValue)
     ProjectView.instance().setPrefHeight(Double.MaxValue)
 
@@ -172,7 +176,7 @@ class MainContent(stage: Stage) extends BorderPane {
       override
 
       def onFirstViewCompleted(): Unit = {
-        HeaderArea.instance().switchView(true)
+        HeaderArea.instance().switchView(projectView = true)
       }
 
       override
@@ -290,6 +294,43 @@ class MainContent(stage: Stage) extends BorderPane {
   def setHeaderAreaVisible(visible: Boolean): Unit = {
     if (visible) this.setTop(HeaderArea.instance())
     else this.setTop(null)
+  }
+
+  /**
+    * Shows popup bar at the top of workspace
+    *
+    * @param text text to be shown
+    */
+  def showNotification(text: String): Unit = {
+    snb.setBarHeight(SlideNotificationBar.DEFAULT_HEIGHT)
+    snb.showIcon(Resources.Images.IMAGE_WARNING)
+    snb.setText(text, fontSize = 15)
+    snb.show(easeTime = 300, showDuration = 2000, closeImmediately = true)
+  }
+
+  /**
+    * Shows popup bar at the top of workspace with custom content
+    *
+    * @param content      content to be shown
+    * @param initialFocus first node to set focus after showing
+    */
+  def showContentBar(iconName: String, content: Pane, initialFocus: Node): Unit = {
+    snb.setOwnContent(content)
+    snb.showIcon(iconName)
+    snb.enableOnClickDisposal(enable = false)
+    snb.setInitialFocusNode(initialFocus)
+    snb.show(easeTime = 300, showDuration = 2000, closeImmediately = false)
+  }
+
+  /**
+    * Hides popup bar at the top of workspace with custom content
+    */
+  def hideContentBar(): Unit = {
+    snb.hide()
+  }
+
+  def setContentBarHeight(height: Double): Unit = {
+    snb.setBarHeight(height)
   }
 
   //topPane.setMinHeight(1)

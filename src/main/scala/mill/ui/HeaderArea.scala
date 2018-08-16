@@ -203,7 +203,8 @@ class HeaderArea private() extends GridPane {
     newEditorButton.setId("new-button")
     newEditorButton.setFocusTraversable(false)
     newEditorButton.setOnAction((_: ActionEvent) => {
-      AppController.instance().addTab("new_file", "")
+      AppController.instance().setFlowState(FlowState.NEW_RESOURCE)
+//      AppController.instance().addTab("new_file", "")
     })
 
     newEditorButton

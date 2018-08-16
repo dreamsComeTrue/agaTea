@@ -3,11 +3,7 @@
 .root {
     -fx-font-size: 12pt;
     -fx-font-family: "Tahoma";
-    -fx-background: #4e4f51;
-}
-
-#center-pane {
-    -fx-background-color: #55575c;
+    -fx-background: rgb(80, 80, 80);
 }
 
 #center-logo {
@@ -15,8 +11,8 @@
     -fx-text-fill: #989a9d;
 }
 
-#infoText {
-    -fx-background-color: #4e4f51;
+.footer-bar {
+    -fx-background-color: rgb(50, 50, 50);
     -fx-text-fill: white;
 }
 
@@ -32,42 +28,249 @@
     -fx-background-color: #e7e9ee;
 }
 
-.text-field
-{
-    -fx-background-color: rgb(80, 80, 80);
+.text-field {
+    -fx-background-color: rgb(50, 50, 50);
     -fx-text-fill: white;
 }
 
-.window-header
-{
+.window-header {
     -fx-background-color: rgb(50, 50, 50);
 }
 
-/*.buttonStyle {*/
-/*-fx-text-fill: #006464;*/
-/*-fx-background-color: #DFB951;*/
-/*-fx-border-radius: 20;*/
-/*-fx-background-radius: 20;*/
-/*-fx-padding: 5;*/
-/*}*/
+.project-explorer-background {
+    -fx-background: rgb(50, 50, 50);
+}
 
+.project-explorer-no-border {
+    -fx-border-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0em;
+    -fx-background-color: transparent;
+}
 
-.class-object
-{
+.project-item-no-border {
+    -fx-text-fill: white;
+    -fx-box-border: transparent;
+    -fx-background-color: transparent;
+    -fx-background-radius: 0;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+    -fx-border-color: transparent;
+}
+
+.class-object {
     -fx-font-size: 15;
 }
 
-.method-slot-type
-{
+.method-slot-type {
     -fx-fill: lightblue;
 }
 
-.method-slot-name
-{
+.method-slot-name {
     -fx-fill: rgb(210, 210, 210);
 }
 
-.method-slot-identifier
-{
+.method-slot-identifier {
     -fx-fill: lightgreen;
+}
+
+.check-box {
+    -fx-text-fill: rgb(180, 180, 180);
+}
+
+.label {
+    -fx-text-fill: rgb(180, 180, 180);
+}
+
+.tree-table-row-cell {
+    -fx-background: transparent;
+}
+
+.tree-table-view {
+    -fx-background-color: transparent;
+}
+
+.tree-table-view .column-header-background{
+    -fx-background-color: rgb(50, 50, 50);
+}
+
+.tree-table-view .column-header-background .label{
+    -fx-background-color: transparent;
+    -fx-text-fill: white;
+}
+
+.tree-table-view .column-header {
+    -fx-background-color: transparent;
+}
+
+.tree-view {
+    -fx-background-insets: 0;
+    -fx-border-color: rgb(50, 50, 50);
+}
+
+.tree-view-no-border {
+    -fx-border-width: 1;
+    -fx-box-border: transparent;
+    -fx-border-color: transparent;
+    -fx-background-color: transparent;
+}
+
+.tree-view-no-border:focused {
+    -fx-border-width: 1;
+    -fx-box-border: transparent;
+    -fx-border-color: transparent;
+    -fx-background-color: transparent;
+}
+
+.tree-cell {
+    -fx-text-fill: rgb(180, 180, 180);
+    -fx-background-color: rgb(80, 80, 80);
+}
+
+.tree-cell:odd {
+    -fx-background-color: rgb(80, 80, 80);
+}
+
+.tree-cell:empty, .tree-cell:odd:empty {
+    -fx-background-color: rgb(80, 80, 80);
+}
+
+.tree-view:focused {
+/ / -fx-background-color: rgb(50, 50, 50);
+}
+
+.tree-view .tree-cell:hover {
+    -fx-background-color: rgb(130, 130, 130);
+    -fx-text-fill: black;
+}
+
+.tree-view .tree-cell:hover:empty {
+    -fx-background-color: rgb(80, 80, 80);
+}
+
+.tree-view:focused .tree-cell:filled:focused:selected,
+.tree-view:focused .tree-cell:filled:focused:selected:hover,
+.tree-cell:highlighted {
+    -fx-background-color: rgb(130, 130, 130);
+    -fx-text-fill: black;
+}
+
+.tree-cell .tree-disclosure-node .arrow {
+    -fx-shape: "m 4.75,9.501 2.889,0 3.86,4.124 -3.86,4.125 -2.889,0 L 8.125,13.625 4.75,9.501 z";
+    -fx-padding: 7 6 0 0;
+}
+
+.tree-cell:expanded .tree-disclosure-node .arrow {
+    -fx-rotate: 90;
+}
+
+.list-view {
+    -fx-background-insets: 0;
+    -fx-background-color: rgb(80, 80, 80);
+    -fx-border-color: rgb(50, 50, 50);
+}
+
+.list-cell {
+    -fx-text-fill: rgb(180, 180, 180);
+    -fx-background-color: rgb(80, 80, 80);
+}
+
+.list-cell:odd {
+    -fx-background-color: rgb(80, 80, 80);
+}
+
+.list-cell:empty, .list-cell:odd:empty {
+    -fx-background-color: rgb(80, 80, 80);
+}
+
+.list-view:focused {
+    -fx-background-color: rgb(80, 80, 80);
+}
+
+.list-view .list-cell:hover {
+    -fx-background-color: rgb(130, 130, 130);
+    -fx-text-fill: black;
+}
+
+.list-view .list-cell:hover:empty {
+    -fx-background-color: rgb(80, 80, 80);
+}
+
+.list-view:focused .list-cell:filled:focused:selected,
+.list-view:focused .list-cell:filled:focused:selected:hover,
+.list-cell:highlighted {
+    -fx-background-color: rgb(130, 130, 130);
+    -fx-text-fill: black;
+}
+
+.menu-button > .arrow-button > .arrow {
+    -fx-padding: 0.0;
+    -fx-background-color: rgb(130, 130, 130);
+    -fx-shape: "M 0 0 h 10 l -5 -5 z";
+    -fx-scale-shape: false;
+}
+
+.progress-bar {
+    -fx-border-radius: 2.5;
+}
+
+.progress-bar:indeterminate {
+    -fx-background-color: transparent;
+}
+
+.progress-bar > .bar {
+    -fx-background-color: gray;
+    -fx-padding: 0.416667em;
+}
+
+.file-switcher-list-view .list-cell {
+    -fx-background-color: rgb(50, 50, 50);
+}
+
+.file-switcher-list-view .list-cell:odd {
+    -fx-background-color: rgb(50, 50, 50);
+}
+
+.validation-error {
+    -fx-text-fill: #ffa0a0;
+    -fx-font-size: 13;
+}
+
+.slide-notification-bar {
+    -fx-text-fill: #ebebeb;
+    -fx-font-size: 12;
+    -fx-font-family: Consolas;
+    -fx-background-color: #595959;
+    -fx-border-color: rgb(50, 50, 50);
+    -fx-border-width: 2;
+}
+
+.label-separator .line {
+    -fx-border-color: rgb(80, 80, 80);
+}
+
+.label-separator .label {
+    -fx-background-color: rgb(80, 80, 80);
+    -fx-text-fill: white;
+    -fx-padding: 1 10;
+}
+
+.pagination {
+    -fx-page-information-visible: false;
+}
+
+.pagination .pagination-control .bullet-button {
+    -fx-background-color: transparent, rgb(50, 50, 50), rgb(50, 50, 50), rgb(50, 50, 50), rgb(50, 50, 50);
+}
+
+.pagination .pagination-control .bullet-button:selected {
+    -fx-background-color: transparent, white, rgb(50, 50, 50), white, rgb(50, 50, 50);
+}
+
+.titled-node-entered .title {
+    -fx-border-color: white !important;
+}
+
+.titled-node-exited .title {
+    -fx-border-color: rgb(80, 80, 80) !important;
 }

@@ -2,6 +2,10 @@
 
 package mill.ui.controls
 
-class SlideNotificationBarSkin {
-}
+import java.util.Collections
 
+import com.sun.javafx.scene.control.behavior.{BehaviorBase, KeyBinding}
+import com.sun.javafx.scene.control.skin.BehaviorSkinBase
+
+class SlideNotificationBarSkin(val control: SlideNotificationBar) extends BehaviorSkinBase[SlideNotificationBar, BehaviorBase[SlideNotificationBar]](control, new BehaviorBase[SlideNotificationBar](control, Collections.emptyList[KeyBinding])) {
+}

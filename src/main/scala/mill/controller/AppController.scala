@@ -19,27 +19,12 @@ import mill.ui.{EditorArea, FooterArea, MainContent, TextEditor}
 import scala.collection.mutable.ListBuffer
 
 class AppController private(val mainContent: MainContent) {
-  def closeResourceInEditor(path: String): Unit = ???
-
-  def showContentBar(imageName: String, content: Pane, initialFocus: Node): Unit = {
-  }
-
-  def setContentBarHeight(i: Int) = ???
-
-  def hideContentBar(): Unit = ???
-
-  def showNotification(SELECT_ONE_OF_RESOURCES: String) = ???
-
-  def openResourceInEditor(fileName: String, filePath: String, resource: Resource) = ???
-
-  def focusEditor(filePath: String): Boolean = ???
-
   private var scheduler: Timeline = _
   private var stageInitializers = new ListBuffer[FXStageInitializer]()
 
   init()
 
-  def init(): Unit = {
+  private def init(): Unit = {
     scheduler = new Timeline(new KeyFrame(Duration.millis(1), (_: ActionEvent) => Platform.runLater(() => {
       for (initializer <- stageInitializers) {
         val result = initializer.fxInitialize
@@ -112,6 +97,20 @@ class AppController private(val mainContent: MainContent) {
   }
 
   def isProductiveMode: Boolean = ApplicationSettings.instance().getProductiveMode
+
+  def closeResourceInEditor(path: String): Unit = EditorArea.instance().closeResourceInEditor(path)
+
+  def showContentBar(imageName: String, content: Pane, initialFocus: Node): Unit = mainContent.showContentBar(imageName, content, initialFocus)
+
+  def setContentBarHeight(height: Int): Unit = mainContent.setContentBarHeight(height)
+
+  def hideContentBar(): Unit = mainContent.hideContentBar()
+
+  def showNotification(text: String): Unit = mainContent.showNotification(text)
+
+  def openResourceInEditor(title: String, filePath: String, boundResource: Resource): Unit = EditorArea.instance().openResourceInEditor(title, filePath, boundResource)
+
+  def focusEditor(filePath: String): Boolean = ???
 
 }
 

@@ -250,8 +250,8 @@ class StateManager {
 
     applicationProjectState.setContent(ProjectView.instance())
     applicationStructureState.setContent(StructureView.instance())
+    settingsState.setContent(SettingsView.instance())
     newResourceState.setContent(content.getNewResourceView)
-    settingsState.setContent(SettingsView.instance().getContent)
     openResourceState.setContent(content.getOpenResourceView)
   }
 

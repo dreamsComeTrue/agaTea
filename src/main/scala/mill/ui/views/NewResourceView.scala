@@ -8,10 +8,12 @@ import java.lang.reflect.{InvocationTargetException, Method}
 import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.event.ActionEvent
 import javafx.geometry.Pos
+import javafx.scene.Node
 import javafx.scene.control._
 import javafx.scene.image.{Image, ImageView}
 import javafx.scene.input.{KeyCode, KeyEvent, MouseEvent}
 import javafx.scene.layout.{AnchorPane, BorderPane, HBox, VBox}
+import javafx.util.Callback
 import mill.controller.{AppController, GlobalState}
 import mill.resources.ResourceHandler
 import mill.{Resources, Utilities}
@@ -20,8 +22,8 @@ import org.apache.commons.collections4.keyvalue.DefaultKeyValue
 import scala.collection.JavaConverters._
 
 class NewResourceView extends BorderPane {
-  private var pagination: Pagination = _
-  private var tree: TreeView[DefaultKeyValue[String, ResourceEntry]] = _
+  private val pagination = new Pagination(2)
+  private val tree = new TreeView[DefaultKeyValue[String, ResourceEntry]]()
   private var selectedEntry: DefaultKeyValue[String, ResourceEntry] = _
 
   private var page1: AnchorPane = _
@@ -34,7 +36,6 @@ class NewResourceView extends BorderPane {
     topBar.setAlignment(Pos.CENTER)
     topBar.getStyleClass.addAll("window-header")
 
-    pagination = new Pagination(2)
     pagination.getStyleClass.addAll(Pagination.STYLE_CLASS_BULLET)
 
     AnchorPane.setTopAnchor(pagination, 1.0)
@@ -42,33 +43,40 @@ class NewResourceView extends BorderPane {
     AnchorPane.setBottomAnchor(pagination, 1.0)
     AnchorPane.setLeftAnchor(pagination, 1.0)
 
-    pagination.setPageFactory((param: java.lang.Integer) => {
-      if (param == 0) {
-        return getPage1
-      } else if (param == 1) {
-        if (selectedEntry != null) return getPage2
-        else {
-          AppController.instance().showNotification(Resources.SELECT_ONE_OF_RESOURCES)
-          return null
-        }
-      }
+    pagination.setPageFactory(new Callback[Integer, Node] {
+      override def call(param: Integer): Node = {
+        if (param == 0) {
+          return getPage1
+        } else if (param == 1) {
+          if (selectedEntry != null) {
+            return getPage2
+          }
+          else {
+            AppController.instance().showNotification(Resources.SELECT_ONE_OF_RESOURCES)
 
-      null
+            return null
+          }
+        }
+
+        null
+      }
     })
 
     this.setTop(topBar)
     this.setCenter(pagination)
-    tree = new TreeView[DefaultKeyValue[String, ResourceEntry]]
   }
 
   private def getPage1: AnchorPane = {
     selectedEntry = null
 
-    if (page1 == null) page1 = initializePage1
+    if (page1 == null) {
+      page1 = initializePage1
+    }
+
     page1
   }
 
-  private def getPage2 = {
+  private def getPage2: FileSelectView = {
     val fileSelect = AppController.instance().mainContent.getFileSelectView
 
     fileSelect.setFileSelectedEvent((event: FileSelectView.FileSelectEvent) => {
@@ -77,11 +85,13 @@ class NewResourceView extends BorderPane {
       AppController.instance().switchToLastState()
 
       val newName = event.getPath + File.separatorChar + event.getFileName.replace(".aga", "") + File.separatorChar + event.getFileName
+
       GlobalState.instance().addOpenedFile(newName)
     })
 
     val defaultFileName = getSelectedEntry.getValue.getResourceHandler.getDefaultResourceName
     fileSelect.initialize(defaultFileName, FileSelectView.FileSelectViewMode.OPEN_FILE)
+
     fileSelect
   }
 
@@ -92,12 +102,12 @@ class NewResourceView extends BorderPane {
     searchBox.setPromptText(Resources.ENTER_RESOURCE_TYPE)
     searchBox.setStyle("-fx-prompt-text-fill: rgb(120, 120, 120);")
 
-    AnchorPane.setTopAnchor(searchBox, 2.0)
+    AnchorPane.setTopAnchor(searchBox, 0.0)
 
     val rootItem = new TreeItem[DefaultKeyValue[String, ResourceEntry]](ResourceEntry.createPair("", "", null))
     rootItem.setExpanded(true)
 
-    val allClasses: scala.List[Class[_]] = Utilities.getAllResourceClasses
+    val allClasses: List[Class[_]] = Utilities.getAllResourceClasses
 
     for (c <- allClasses) {
       val className: String = c.getName
@@ -118,7 +128,7 @@ class NewResourceView extends BorderPane {
 
           val resourceName: String = m.invoke(o).asInstanceOf[String]
 
-          if (resourceName != null) { //todo: continue is not supported
+          if (resourceName != null) {
             var group: TreeItem[DefaultKeyValue[String, ResourceEntry]] = null
             var foundGroup: Boolean = false
 
@@ -130,7 +140,7 @@ class NewResourceView extends BorderPane {
             }
 
             if (!foundGroup) {
-              group = createEntry(groupName, Resources.Images.IMAGE_COFFEE, null)
+              group = createEntry(groupName, Resources.Images.IMAGE_COFFEE, resourceHandlerClass = null)
               rootItem.getChildren.add(group)
             }
 
@@ -226,7 +236,7 @@ class NewResourceView extends BorderPane {
       override def changed(observableValue: ObservableValue[_ <: Number], oldValue: Number, newValue: Number): Unit = {
         val maxHeight: Double = 100.0
         val newHeight: Double = newValue.doubleValue / 2 - maxHeight
-        AnchorPane.setTopAnchor(searchBox, newHeight - 23.0)
+        AnchorPane.setTopAnchor(searchBox, newHeight - 30.0)
         AnchorPane.setTopAnchor(bp, newHeight)
         AnchorPane.setBottomAnchor(bp, newHeight)
       }

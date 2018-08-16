@@ -26,8 +26,7 @@ import org.controlsfx.tools.Borders
 
 import scala.collection.JavaConverters._
 
-class SettingsView private() {
-  private var wrappedPane: Node = _
+class SettingsView private() extends  BorderPane {
   private var centerPane: StackPane = _
   private var editorPane: AnchorPane = _
   private var compilerPane: GridPane = _
@@ -38,19 +37,17 @@ class SettingsView private() {
 
   init()
 
-  private def init() {
+  private def init(): Unit = {
     val topBar: VBox = prepareTopBar
 
     createCenterPane()
 
     val bottomRowWithBorder: Node = createBottomRow
-    val content: BorderPane = new BorderPane(centerPane)
 
-    content.setTop(topBar)
-    content.setLeft(prepareNavigationTree)
-    content.setBottom(bottomRowWithBorder)
-
-    wrappedPane = Borders.wrap(content).lineBorder.innerPadding(0).outerPadding(0).color(Color.rgb(50, 50, 50), Color.rgb(50, 50, 50), Color.TRANSPARENT, Color.rgb(50, 50, 50)).buildAll
+    this.setCenter(centerPane)
+    this.setTop(topBar)
+    this.setLeft(prepareNavigationTree)
+    this.setBottom(bottomRowWithBorder)
   }
 
   private def createCenterPane(): Unit = {
@@ -461,8 +458,6 @@ class SettingsView private() {
   def openProjectSettingsPage(): Unit = {
     indexTree.getSelectionModel.select(projectSettings)
   }
-
-  def getContent: Node = wrappedPane
 
   final private val highlighted: PseudoClass = PseudoClass.getPseudoClass("highlighted")
 

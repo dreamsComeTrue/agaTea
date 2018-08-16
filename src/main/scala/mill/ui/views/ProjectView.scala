@@ -22,7 +22,7 @@ class ProjectView private() extends SplitPane with FXStageInitializer {
   init()
 
   def init(): Unit = {
-    editorPane = EditorArea.initialize().init()
+    editorPane = EditorArea.instance().init()
     editorCenterStack = new StackPane(editorPane)
 
     SplitPane.setResizableWithParent(ProjectExplorer.instance(), false)
@@ -82,13 +82,9 @@ class ProjectView private() extends SplitPane with FXStageInitializer {
 object ProjectView {
   private var _instance: ProjectView = _
 
-  def initialize(): ProjectView = {
+  def instance(): ProjectView = {
     if (_instance == null) _instance = new ProjectView()
 
-    _instance
-  }
-
-  def instance(): ProjectView = {
     _instance
   }
 }

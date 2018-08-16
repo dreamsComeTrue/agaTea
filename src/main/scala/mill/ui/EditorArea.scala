@@ -7,19 +7,21 @@ import java.io.File
 import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.event.ActionEvent
 import javafx.geometry.Orientation
-import javafx.scene.Node
 import javafx.scene.control.{Label, SplitPane, Tab, TabPane}
 import javafx.scene.image.{Image, ImageView}
 import javafx.scene.layout.StackPane
-import javafx.scene.paint.Color
 import mill.controller.{AppController, FXStageInitializer}
+import mill.resources.Resource
 import mill.resources.settings.ApplicationSettings
 import mill.ui.controls.SplitPaneDividerSlider
-import org.controlsfx.tools.Borders
 
 import scala.io.Source
 
 class EditorArea private() extends FXStageInitializer {
+  def closeResourceInEditor(path: String): Unit = ???
+
+  def openResourceInEditor(title: String, filePath: String, boundResource: Resource) = ???
+
   private val tabPane = createTabPane()
   private var centerStack: StackPane = createCenterStack()
   private val editorConsole: EditorConsole = new EditorConsole
@@ -31,7 +33,7 @@ class EditorArea private() extends FXStageInitializer {
 
   def createCenterStack(): StackPane = {
     centerStack = new StackPane(createLogo(), tabPane)
-    centerStack.getStyleClass.add("codeArea")
+    centerStack.getStyleClass.add("code-area")
 
     centerStack
   }
@@ -63,9 +65,7 @@ class EditorArea private() extends FXStageInitializer {
     consoleSlider
   }
 
-  def init(): Node = {
-    Borders.wrap(consoleSplitPane).lineBorder.outerPadding(0).innerPadding(0).color(Color.rgb(50, 50, 50), Color.TRANSPARENT, Color.TRANSPARENT, Color.rgb(50, 50, 50)).buildAll
-
+  def init(): SplitPane = {
     consoleSplitPane
   }
 
@@ -158,13 +158,9 @@ class EditorArea private() extends FXStageInitializer {
 object EditorArea {
   private var _instance: EditorArea = _
 
-  def initialize(): EditorArea = {
+  def instance(): EditorArea = {
     if (_instance == null) _instance = new EditorArea()
 
-    _instance
-  }
-
-  def instance(): EditorArea = {
     _instance
   }
 }

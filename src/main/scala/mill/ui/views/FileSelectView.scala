@@ -40,7 +40,7 @@ class FileSelectView() extends AnchorPane {
 
   init()
 
-  def init() {
+  private def init(): Unit = {
     val rootNode: TreeItem[FileTreeItemEntry] = prepareRootFileEntry
     val nameColumn: PercentageTreeTableView.PercentageTableColumn[FileTreeItemEntry, String] = prepareNameColumn
     val sizeColumn: PercentageTreeTableView.PercentageTableColumn[FileTreeItemEntry, FileTreeItemEntry] = prepareSizeColumn
@@ -55,17 +55,19 @@ class FileSelectView() extends AnchorPane {
 
     val headerBox: HBox = prepareHeaderPane
     val fieldsPane: SplitPane = prepareFieldsPane
-    val vboxPane: VBox = new VBox(headerBox, treeTableView, fieldsPane)
+    val boxPane: VBox = new VBox(headerBox, treeTableView, fieldsPane)
+
+    boxPane.getStyleClass.add("project-explorer-background")
 
     VBox.setMargin(headerBox, new Insets(0, 0, 2, 0))
     VBox.setMargin(treeTableView, new Insets(0, 0, 4, 0))
 
-    AnchorPane.setTopAnchor(vboxPane, 2.0)
-    AnchorPane.setLeftAnchor(vboxPane, 2.0)
-    AnchorPane.setRightAnchor(vboxPane, 2.0)
-    AnchorPane.setBottomAnchor(vboxPane, 0.0)
+    AnchorPane.setTopAnchor(boxPane, 2.0)
+    AnchorPane.setLeftAnchor(boxPane, 2.0)
+    AnchorPane.setRightAnchor(boxPane, 2.0)
+    AnchorPane.setBottomAnchor(boxPane, 0.0)
 
-    this.getChildren.addAll(vboxPane)
+    this.getChildren.addAll(boxPane)
 
     attachTreeSelectionToPathField()
     attachTreeMouseClicked()
@@ -190,7 +192,7 @@ class FileSelectView() extends AnchorPane {
       }
     })
 
-    removeFavorite.setOnAction((event: ActionEvent) => {
+    removeFavorite.setOnAction((_: ActionEvent) => {
       //  if (favoriteListView.getSelectionModel ().getSelectedItem () != null)
 
       //      favoritesDirsNames.remove (favoriteListView.getSelectionModel ().getSelectedItem ());
@@ -208,12 +210,12 @@ class FileSelectView() extends AnchorPane {
     fileField = new TextField("")
 
     val okButton: Button = Utilities.createButton(Resources.Images.IMAGE_ACCEPT, 20.0, Utilities.DEFAULT_IMAGE_PADDING)
-    okButton.setOnAction((event: ActionEvent) => handleFileOpen())
+    okButton.setOnAction((_: ActionEvent) => handleFileOpen())
     okButton.setTooltip(new Tooltip(Resources.ACCEPT))
 
     val cancelButton: Button = Utilities.createButton(Resources.Images.IMAGE_REJECT, 20.0, Utilities.DEFAULT_IMAGE_PADDING)
     cancelButton.setTooltip(new Tooltip(Resources.REJECT))
-    cancelButton.setOnAction((event: ActionEvent) => {
+    cancelButton.setOnAction((_: ActionEvent) => {
       if (fileCanceledEvent != null) {
         val fse: FileSelectView.FileSelectEvent = new FileSelectView.FileSelectEvent(null, null)
         fileCanceledEvent.handle(fse)
@@ -256,7 +258,7 @@ class FileSelectView() extends AnchorPane {
             val attributes: BasicFileAttributes = Files.readAttributes(path, classOf[BasicFileAttributes])
             return new ReadOnlyObjectWrapper[FileTime](attributes.creationTime)
           } catch {
-            case e: IOException =>
+            case _: IOException =>
 
             //  e.printStackTrace ();
           }
@@ -268,7 +270,7 @@ class FileSelectView() extends AnchorPane {
       foo(p)
     })
 
-    createdColumn.setCellFactory((param: TreeTableColumn[FileTreeItemEntry, FileTime]) => new TreeTableCell[FileTreeItemEntry, FileTime]() {
+    createdColumn.setCellFactory((_: TreeTableColumn[FileTreeItemEntry, FileTime]) => new TreeTableCell[FileTreeItemEntry, FileTime]() {
       override protected def updateItem(item: FileTime, empty: Boolean): Unit = {
         super.updateItem(item, empty)
         if (item == null || empty) setText(null)
@@ -333,7 +335,7 @@ class FileSelectView() extends AnchorPane {
       foo(p)
     })
 
-    nameColumn.setCellFactory((param: TreeTableColumn[FileTreeItemEntry, String]) => new TreeTableCell[FileTreeItemEntry, String]() {
+    nameColumn.setCellFactory((_: TreeTableColumn[FileTreeItemEntry, String]) => new TreeTableCell[FileTreeItemEntry, String]() {
       override protected def updateItem(itemName: String, empty: Boolean): Unit = {
         super.updateItem(itemName, empty)
         val thisTreeItem: TreeItem[FileTreeItemEntry] = this.getTreeTableRow.getTreeItem
@@ -465,26 +467,25 @@ class FileSelectView() extends AnchorPane {
       private var isFirstTimeChildren: Boolean = true
       private var isFirstTimeLeaf: Boolean = true
 
-      override
-
-      def getChildren: ObservableList[TreeItem[FileTreeItemEntry]] = {
+      override def getChildren: ObservableList[TreeItem[FileTreeItemEntry]] = {
         if (isFirstTimeChildren) {
           isFirstTimeChildren = false
+
           super.getChildren.setAll(buildChildren(this))
         }
+
         super.getChildren
       }
 
-      override
-
-      def isLeaf: Boolean = {
+      override def isLeaf: Boolean = {
         if (isFirstTimeLeaf) {
           isFirstTimeLeaf = false
 
           val f: File = getValue.getFile
           leaf = f.isFile
         }
-        isLeaf
+
+        leaf
       }
     }
   }

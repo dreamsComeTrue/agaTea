@@ -1,60 +1,59 @@
 /* Copyright 2018 Dominik 'dreamsComeTrue' Jasiński. All Rights Reserved. */
 
-
-.codeArea {
-    -fx-background-color: #333436;
+.code-area {
+    -fx-background-color: rgb(50, 50, 50);
 }
 
-.codeArea .selection {
+.code-area .selection {
     -fx-fill: #687cb8 !important;
     -fx-stroke-width: 0;
 }
 
-.codeArea .paragraph-box:has-caret {
+.code-area .paragraph-box:has-caret {
     -fx-background-color: rgb(67, 67, 67);
 }
 
-.codeArea .text {
+.code-area .text {
     -fx-fill: white;
 }
 
-.codeArea .text.keyword {
+.code-area .text.keyword {
     -fx-fill: orange;
     -fx-font-weight: bold;
 }
 
-.codeArea .text.semicolon {
+.code-area .text.semicolon {
     -fx-font-weight: bold;
 }
 
-.codeArea .text.paren {
+.code-area .text.paren {
     -fx-fill: #687cb8;
     -fx-font-weight: bold;
 }
 
-.codeArea .text.bracket {
+.code-area .text.bracket {
     -fx-fill: #687cb8;
     -fx-font-weight: bold;
 }
 
-.codeArea .text.brace {
+.code-area .text.brace {
     -fx-fill: #687cb8;
     -fx-font-weight: bold;
 }
 
-.codeArea .text.string {
+.code-area .text.string {
     -fx-fill: #0bc30f;
 }
 
-.codeArea .text.comment {
+.code-area .text.comment {
     -fx-fill: cadetblue;
 }
 
-.codeArea .caret {
+.code-area .caret {
     -fx-stroke: yellow;
 }
 
-.codeArea .lineno {
+.code-area .lineno {
     -fx-font-style: normal;
     -fx-background-color: #2c2e30;
     -fx-text-fill: yellow;

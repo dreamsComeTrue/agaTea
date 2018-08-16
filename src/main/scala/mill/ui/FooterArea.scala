@@ -18,8 +18,8 @@ class FooterArea private() extends BorderPane {
 
   init()
 
-  private def init() {
-    infoText.setId("infoText")
+  private def init(): Unit = {
+    this.getStyleClass.add("footer-bar")
 
     val dis: ObservableValue[java.lang.Boolean] = Val.map(EditorMode.mode, (sl: Number) => sl.intValue() != EditorMode.COMMAND_MODE)
     infoText.disableProperty.bind(dis)
@@ -29,9 +29,9 @@ class FooterArea private() extends BorderPane {
         if (newValue) EditorMode.mode.set(EditorMode.COMMAND_MODE)
       }
     })
+
     infoText.setPadding(new Insets(1.0))
     infoText.minWidthProperty().bind(this.widthProperty().subtract(100))
-    this.setLeft(infoText)
 
     EditorMode.mode.addListener(new ChangeListener[Number] {
       override def changed(observableValue: ObservableValue[_ <: Number], t: Number, newValue: Number): Unit = {
@@ -47,6 +47,7 @@ class FooterArea private() extends BorderPane {
 
     posLabel.setPadding(new Insets(1.0))
 
+    this.setLeft(infoText)
     this.setRight(posLabel)
   }
 

@@ -38,8 +38,8 @@ class PercentageTreeTableView[s] @SuppressWarnings(Array("rawtypes"))() extends 
       var i = 0
       for (column <- PercentageTreeTableView.this.table.getColumns.asScala) {
         val col: PercentageTreeTableView.PercentageTableColumn[_, _] = column.asInstanceOf[PercentageTreeTableView.PercentageTableColumn[_, _]]
-        val consta = new ColumnConstraints
-        consta.setPercentWidth(col.getPercentWidth.get)
+        val constraints = new ColumnConstraints
+        constraints.setPercentWidth(col.getPercentWidth.get)
 
         val sp = new StackPane
 
@@ -49,7 +49,7 @@ class PercentageTreeTableView[s] @SuppressWarnings(Array("rawtypes"))() extends 
         }
         else column.prefWidthProperty.bind(sp.widthProperty)
 
-        arr1 += consta
+        arr1 += constraints
         arr2 += sp
         i += 1
       }
