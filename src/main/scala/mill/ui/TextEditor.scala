@@ -27,6 +27,16 @@ import org.reactfx.value.Val
 import scala.language.implicitConversions
 
 class TextEditor(val tabName: String, val text: String, val path: String) extends AnchorPane {
+  def setFontSize(size: Double) = ???
+
+  def showLineHighlight(getHighlightCurrentLine: Boolean) = ???
+
+  def showLineNumbers(getLineNumbersVisible: Boolean) = ???
+
+  def setSyntaxHighlightingEnabled(getSyntaxHighlightingEnabled: Boolean) = ???
+
+  def setCaretVisible(bool: Boolean) = ???
+
 
   private val KEYWORDS =
     util.Arrays.asList("abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class", "const", "continue", "default", "def", "do", "double", "else", "enum", "extends", "final", "finally", "float", "for", "goto", "if", "implements", "import", "instanceof", "int", "interface", "long", "native", "new", "object", "override", "package", "private", "protected", "public", "return", "short", "static", "strictfp", "super", "switch", "synchronized", "this", "throw", "throws", "transient", "try", "void", "val", "var", "volatile", "while")

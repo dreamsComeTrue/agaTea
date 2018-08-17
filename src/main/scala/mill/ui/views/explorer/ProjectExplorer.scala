@@ -163,7 +163,7 @@ class ProjectExplorer private() extends BorderPane {
   }
 
   private def createStickyButton: ToggleButton = {
-    val stickyButton: ToggleButton = Utilities.createOnOffButton(Resources.Images.MAGNET_ON, Resources.Images.MAGNET_OFF, 20, 4)
+    val stickyButton: ToggleButton = Utilities.createOnOffButton(Resources.Images.MAGNET_OFF, Resources.Images.MAGNET_ON, 20, 4)
     stickyButton.setFocusTraversable(false)
     stickyButton.setOnAction((_: ActionEvent) => ApplicationSettings.instance().setStickyProjectExplorer(stickyButton.isSelected))
     stickyButton.setSelected(ApplicationSettings.instance().getStickyProjectExplorer)

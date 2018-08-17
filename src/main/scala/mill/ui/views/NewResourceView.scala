@@ -84,7 +84,7 @@ class NewResourceView extends BorderPane {
 
       AppController.instance().switchToLastState()
 
-      val newName = event.getPath + File.separatorChar + event.getFileName.replace(".aga", "") + File.separatorChar + event.getFileName
+      val newName = event.getPath.replace(".aga", "")
 
       GlobalState.instance().addOpenedFile(newName)
     })

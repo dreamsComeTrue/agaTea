@@ -4,24 +4,26 @@ package mill.ui
 
 import java.io.File
 
+import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.value.{ChangeListener, ObservableValue}
+import javafx.collections.{FXCollections, ListChangeListener}
 import javafx.event.ActionEvent
 import javafx.geometry.Orientation
 import javafx.scene.control.{Label, SplitPane, Tab, TabPane}
 import javafx.scene.image.{Image, ImageView}
-import javafx.scene.layout.StackPane
-import mill.controller.{AppController, FXStageInitializer}
+import javafx.scene.layout.{BorderPane, StackPane}
+import mill.controller.{AppController, FXStageInitializer, GlobalState}
 import mill.resources.Resource
 import mill.resources.settings.ApplicationSettings
 import mill.ui.controls.SplitPaneDividerSlider
+import mill.ui.editor.{EditorBuffer, EditorWindow, EditorWindowContainer}
+import org.apache.commons.io.FilenameUtils
+import org.apache.commons.lang3.tuple.Pair
 
+import scala.collection.JavaConverters._
 import scala.io.Source
 
 class EditorArea private() extends FXStageInitializer {
-  def closeResourceInEditor(path: String): Unit = ???
-
-  def openResourceInEditor(title: String, filePath: String, boundResource: Resource) = ???
-
   private val tabPane = createTabPane()
   private var centerStack: StackPane = createCenterStack()
   private val editorConsole: EditorConsole = new EditorConsole
@@ -29,10 +31,18 @@ class EditorArea private() extends FXStageInitializer {
   private var consoleSlider: SplitPaneDividerSlider = createConsoleSlider()
   private var consoleWindowVisible = true
 
+  private val windowContainer = new EditorWindowContainer
+  private val editorWindows = FXCollections.observableArrayList[EditorWindow]
+  private var activeEditorWindow: SimpleObjectProperty[EditorWindow] = _
+
   override def fxInitialize: Boolean = true
 
   def createCenterStack(): StackPane = {
-    centerStack = new StackPane(createLogo(), tabPane)
+    val centerContent = new BorderPane
+    centerContent.setCenter(windowContainer)
+    centerContent.setMinHeight(0.0)
+
+    centerStack = new StackPane(createLogo(), centerContent)
     centerStack.getStyleClass.add("code-area")
 
     centerStack
@@ -152,6 +162,161 @@ class EditorArea private() extends FXStageInitializer {
 
       consoleSlider.setAimContentVisible(consoleWindowVisible)
     }
+  }
+
+  def closeResourceInEditor(path: String): Unit = {
+    for (window <- editorWindows.asScala) {
+      for (buffer <- window.getBuffers.asScala) {
+        if (buffer.getPath == path) {
+          window.removeBuffer(buffer)
+          return
+        }
+      }
+    }
+  }
+
+  def openResourceInEditor(title: String, path: String, resource: Resource): Unit = { //	Try to find already opened file
+    for (window <- editorWindows.asScala) {
+      for (buffer <- window.getBuffers.asScala) {
+        if (buffer.getPath == path) return
+      }
+    }
+
+    if (activeEditorWindow.getValue == null) {
+      val window = new EditorWindow
+      addEditorWindow(window)
+      setActiveEditorWindow(window)
+    }
+
+    GlobalState.instance().addOpenedFile(path)
+
+    val buffer = activeEditorWindow.get.addBuffer(title)
+    buffer.openFile(FilenameUtils.normalize(path), resource)
+  }
+
+  private def addEditorWindow(window: EditorWindow): Unit = {
+    editorWindows.add(window)
+    activeEditorWindow.set(window)
+    windowContainer.addWindow(window)
+
+    //	Attach listener for window removal, when no buffer is active
+    val buffers = window.getBuffers
+
+    buffers.addListener(new ListChangeListener[EditorBuffer] {
+      override def onChanged(c: ListChangeListener.Change[_ <: EditorBuffer]): Unit = {
+        if (buffers.size == 0) removeEditorWindow(window)
+      }
+    })
+  }
+
+  def removeEditorWindow(window: EditorWindow): Unit = {
+    windowContainer.removeWindow(window)
+    editorWindows.remove(window)
+
+    if (editorWindows.size > 0) activeEditorWindow.set(editorWindows.get(editorWindows.size - 1))
+    else activeEditorWindow.set(null)
+  }
+
+  def splitToRight(buffer: EditorBuffer): Unit = {
+    if (buffer.getWindow.getBuffers.size > 1) {
+      val windows = splitFunction(buffer)
+
+      windowContainer.splitToRight(windows.getLeft, windows.getRight)
+      buffer.requestFocus()
+    }
+  }
+
+  def splitToLeft(buffer: EditorBuffer): Unit = {
+    if (buffer.getWindow.getBuffers.size > 1) {
+      val windows = splitFunction(buffer)
+
+      windowContainer.splitToLeft(windows.getLeft, windows.getRight)
+      buffer.requestFocus()
+    }
+  }
+
+  def splitToTop(buffer: EditorBuffer): Unit = {
+    if (buffer.getWindow.getBuffers.size > 1) {
+      val windows = splitFunction(buffer)
+
+      windowContainer.splitToTop(windows.getLeft, windows.getRight)
+      buffer.requestFocus()
+    }
+  }
+
+  def splitToBottom(buffer: EditorBuffer): Unit = {
+    if (buffer.getWindow.getBuffers.size > 1) {
+      val windows = splitFunction(buffer)
+
+      windowContainer.splitToBottom(windows.getLeft, windows.getRight)
+      buffer.requestFocus()
+    }
+  }
+
+  private def splitFunction(buffer: EditorBuffer) = { //	Store old pane
+    val oldWindow = buffer.getWindow
+
+    //	Create new window with selected buffer
+    val window = new EditorWindow
+
+    editorWindows.add(window)
+    activeEditorWindow.get.removeBuffer(buffer)
+    activeEditorWindow.set(window)
+    activeEditorWindow.get.addBuffer(buffer)
+
+    GlobalState.instance().addOpenedFile(buffer.getPath)
+
+    //	Attach listener for window removal, when no buffer is active
+    val buffers = window.getBuffers
+    buffers.addListener(new ListChangeListener[EditorBuffer] {
+      override def onChanged(c: ListChangeListener.Change[_ <: EditorBuffer]): Unit = {
+        if (buffers.size == 0) removeEditorWindow(window)
+      }
+    })
+
+    Pair.of(window, oldWindow)
+  }
+
+  def setActiveEditorWindow(window: EditorWindow): Unit = {
+    //	Sets active buffer to NULL on PREVIOUS active editor window
+    if (activeEditorWindow.get != window) {
+      if (activeEditorWindow.get != null) activeEditorWindow.get.setActiveBuffer(null)
+
+      activeEditorWindow.set(window)
+    }
+  }
+
+  def getActiveEditorWindow: EditorWindow = activeEditorWindow.get
+
+  def getActiveEditorBuffer: EditorBuffer = if (activeEditorWindow.get == null) null
+  else activeEditorWindow.get.getActiveBuffer
+
+  def actionMoveToPreviousBuffer(): Unit = {
+    val buffers = getActiveEditorWindow.getBuffers
+    var nextIndex = -1
+
+    for (i <- 0 until buffers.size) {
+      if (nextIndex == -1 && buffers.get(i) != getActiveEditorBuffer) {
+        nextIndex = i - 1
+      }
+    }
+
+    if (nextIndex < 0) nextIndex = buffers.size - 1
+    getActiveEditorWindow.setActiveBuffer(buffers.get(nextIndex))
+  }
+
+  def actionMoveToNextBuffer(): Unit = {
+    val buffers = getActiveEditorWindow.getBuffers
+    var nextIndex = -1
+
+    for (i <- 0 until buffers.size) {
+      if (nextIndex == -1 && buffers.get(i) != getActiveEditorBuffer) {
+        nextIndex = i + 1
+      }
+    }
+
+    if (nextIndex >= buffers.size) nextIndex = 0
+    getActiveEditorWindow.setActiveBuffer(buffers.get(nextIndex))
   }
 }
 

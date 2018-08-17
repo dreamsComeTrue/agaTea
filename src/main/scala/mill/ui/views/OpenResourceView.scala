@@ -31,8 +31,7 @@ class OpenResourceView extends BorderPane {
   def refreshFileSelectView(): Unit = {
     val fileSelectView = AppController.instance().mainContent.getFileSelectView
     fileSelectView.setFileSelectedEvent((event: FileSelectView.FileSelectEvent) => {
-      val newName = event.getPath + File.separatorChar + event.getFileName
-      val res = ResourceFactory.handleFileOpen(newName)
+      val res = ResourceFactory.handleFileOpen(event.getPath)
 
       if (res != null) AppController.instance().switchToLastState()
     })

@@ -6,6 +6,7 @@ import java.io.File
 
 import javafx.animation.{Animation, KeyFrame, Timeline}
 import javafx.application.Platform
+import javafx.beans.property.DoubleProperty
 import javafx.event.ActionEvent
 import javafx.scene.Node
 import javafx.scene.layout.Pane
@@ -13,6 +14,7 @@ import javafx.util.Duration
 import mill.controller.FlowState.FlowState
 import mill.resources.Resource
 import mill.resources.settings.ApplicationSettings
+import mill.ui.editor.{EditorBuffer, EditorWindow}
 import mill.ui.views.ProjectView
 import mill.ui.{EditorArea, FooterArea, MainContent, TextEditor}
 
@@ -111,6 +113,19 @@ class AppController private(val mainContent: MainContent) {
   def openResourceInEditor(title: String, filePath: String, boundResource: Resource): Unit = EditorArea.instance().openResourceInEditor(title, filePath, boundResource)
 
   def focusEditor(filePath: String): Boolean = ???
+
+  def maximizeEditorBuffer(maximize: Boolean): Unit = {
+    setProjectExplorerVisible(maximize)
+    setConsoleWindowVisible(maximize)
+  }
+
+  def setActiveEditorWindow(editorWindow: EditorWindow): Unit = {
+    EditorArea.instance().setActiveEditorWindow(editorWindow)
+  }
+
+  def getActiveEditorBuffer: EditorBuffer = EditorArea.instance().getActiveEditorBuffer
+
+  def getCurrentFontSize: DoubleProperty = getActiveEditorBuffer.getTextEditor.getFontSize
 
 }
 

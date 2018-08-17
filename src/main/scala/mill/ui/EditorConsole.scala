@@ -97,7 +97,7 @@ class EditorConsole extends BorderPane {
   }
 
   private def createStickyButton = {
-    val stickyButton = Utilities.createOnOffButton(Resources.Images.MAGNET_ON, Resources.Images.MAGNET_OFF, 20, 4)
+    val stickyButton = Utilities.createOnOffButton(Resources.Images.MAGNET_OFF, Resources.Images.MAGNET_ON, 20, 4)
     stickyButton.setFocusTraversable(false)
     stickyButton.setOnAction((_: ActionEvent) => ApplicationSettings.instance().setStickyEditorConsole(stickyButton.isSelected))
     stickyButton.setSelected(ApplicationSettings.instance().getStickyEditorConsole)

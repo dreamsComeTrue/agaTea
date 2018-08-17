@@ -213,8 +213,6 @@ class HeaderArea private() extends GridPane {
   private def createOpenResourceButton = {
     val imageOpen = new Image(Utilities.getResource(Resources.Images.IMAGE_OPEN))
     val imageOpenView = new ImageView(imageOpen)
-    imageOpenView.setFitHeight(10)
-    imageOpenView.setFitWidth(10)
 
     val openButton = new SlideButton("", imageOpenView, buttonSize)
     openButton.setId("open-button")
@@ -235,13 +233,14 @@ class HeaderArea private() extends GridPane {
   private def createSaveButton = {
     val imageSave = new Image(Utilities.getResource(Resources.Images.IMAGE_SAVE))
     val imageSaveView = new ImageView(imageSave)
-    imageSaveView.setFitHeight(20)
-    imageSaveView.setFitWidth(20)
 
     val saveButton = new SlideButton("", imageSaveView, buttonSize)
     saveButton.setId("save-button")
     saveButton.setFocusTraversable(false)
     saveButton.setHorizontalOrientation(false)
+
+    imageSaveView.fitWidthProperty.bind(Bindings.subtract(saveButton.widthProperty, 2))
+    imageSaveView.fitHeightProperty.bind(Bindings.subtract(saveButton.heightProperty, 2))
 
     val saveAllButton = Utilities.createButton(Resources.Images.IMAGE_SAVE_ALL, buttonSize, buttonPadding)
     saveAllButton.setOnAction((_: ActionEvent) => saveButton.hide())
