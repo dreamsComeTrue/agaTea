@@ -112,7 +112,7 @@ class AppController private(val mainContent: MainContent) {
 
   def openResourceInEditor(title: String, filePath: String, boundResource: Resource): Unit = EditorArea.instance().openResourceInEditor(title, filePath, boundResource)
 
-  def focusEditor(filePath: String): Boolean = ???
+  def focusEditor(filePath: String): Boolean = EditorArea.instance().focusEditorBuffer(filePath)
 
   def maximizeEditorBuffer(maximize: Boolean): Unit = {
     setProjectExplorerVisible(maximize)

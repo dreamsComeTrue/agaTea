@@ -9,7 +9,7 @@ import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.geometry.Insets
 import javafx.scene.control.{Label, Slider, TextField, Tooltip}
 import javafx.scene.input.{KeyCode, KeyEvent}
-import javafx.scene.layout.BorderPane
+import javafx.scene.layout.{BorderPane, HBox}
 import mill.controller.AppController
 import mill.{EditorMode, Resources}
 import org.reactfx.value.Val
@@ -17,16 +17,16 @@ import org.reactfx.value.Val
 class FooterArea private() extends BorderPane {
   private val infoText = new TextField("File:")
   private val posLabel = new Label("[1:2]")
-  private var zoomSlider = new Slider
-
-  private val messageLabel = new Label
-  private val infoLabel = new Label
+  private val zoomSlider = new Slider
   private val zoomLabel = new Label
 
   init()
 
   private def init(): Unit = {
     this.getStyleClass.add("footer-bar")
+
+    prepareLabels()
+    prepareZoomSlider()
 
     val dis: ObservableValue[java.lang.Boolean] = Val.map(EditorMode.mode, (sl: Number) => sl.intValue() != EditorMode.COMMAND_MODE)
     infoText.disableProperty.bind(dis)
@@ -38,7 +38,7 @@ class FooterArea private() extends BorderPane {
     })
 
     infoText.setPadding(new Insets(1.0))
-    infoText.minWidthProperty().bind(this.widthProperty().subtract(100))
+    infoText.minWidthProperty().bind(this.widthProperty().subtract(300))
 
     EditorMode.mode.addListener(new ChangeListener[Number] {
       override def changed(observableValue: ObservableValue[_ <: Number], t: Number, newValue: Number): Unit = {
@@ -54,8 +54,10 @@ class FooterArea private() extends BorderPane {
 
     posLabel.setPadding(new Insets(1.0))
 
-    this.setLeft(infoText)
-    this.setRight(posLabel)
+    val rightBox = new HBox(zoomSlider, zoomLabel, posLabel)
+
+    this.setCenter(infoText)
+    this.setRight(rightBox)
   }
 
   private def prepareLabels(): Unit = {
@@ -64,7 +66,6 @@ class FooterArea private() extends BorderPane {
   }
 
   private def prepareZoomSlider(): Unit = {
-    zoomSlider = new Slider
     zoomSlider.setFocusTraversable(false)
     zoomSlider.setMax(200)
     zoomSlider.setPrefWidth(60.0)

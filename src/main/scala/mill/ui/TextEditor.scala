@@ -10,7 +10,7 @@ import java.util.function.{Consumer, IntFunction}
 import java.util.regex.Pattern
 
 import javafx.beans.property.SimpleDoubleProperty
-import javafx.beans.value.ObservableValue
+import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.concurrent.Task
 import javafx.event.Event
 import javafx.geometry.Pos
@@ -90,11 +90,16 @@ class TextEditor(val tabName: String, val text: String, val path: String) extend
       .awaitLatest(codeArea.multiPlainChanges())
       .filterMap(t => t.toOptional)
       .subscribe(applyHighlighting _)
+    codeArea.appendText(text)
+
+    fontSize.addListener(new ChangeListener[Number] {
+      override def changed(observableValue: ObservableValue[_ <: Number], t: Number, newValue: Number): Unit = {
+        codeArea.setStyle("-fx-font-size: " + newValue + "pt;")
+      }
+    })
 
     //  Fix 'Tab' key to insert 4 spaces
     changeKeyTabSize(codeArea)
-
-    codeArea.appendText(text)
 
     val result = new VirtualizedScrollPane(codeArea)
 
@@ -143,6 +148,11 @@ class TextEditor(val tabName: String, val text: String, val path: String) extend
   def setSyntaxHighlightingEnabled(getSyntaxHighlightingEnabled: Boolean) = {}
 
   def setCaretVisible(bool: Boolean) = {}
+
+  override def requestFocus(): Unit = {
+    super.requestFocus()
+    codeAreaVirtual.getContent.requestFocus()
+  }
 
   private def applyHighlighting(highlighting: StyleSpans[util.Collection[String]]): Unit = {
     codeAreaVirtual.getContent.setStyleSpans(0, highlighting)

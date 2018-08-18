@@ -25,6 +25,8 @@ class ProjectView private() extends SplitPane with FXStageInitializer {
     editorPane = EditorArea.instance().init()
     editorCenterStack = new StackPane(editorPane)
 
+    ProjectExplorer.instance().initialize()
+
     SplitPane.setResizableWithParent(ProjectExplorer.instance(), false)
 
     this.getItems.addAll(ProjectExplorer.instance(), editorCenterStack)

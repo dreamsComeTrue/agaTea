@@ -135,8 +135,8 @@ class FileSelectView() extends AnchorPane {
             selectedItemIndex = -1
             selectionString.set("")
           }
+          else handleFileOpen()
         }
-        else handleFileOpen()
       }
       else if (event.getCode == KeyCode.ESCAPE) {
         selectedItems.clear()

@@ -50,7 +50,7 @@ class MainContent(stage: Stage) extends BorderPane {
   init()
 
   def init(): Unit = {
-    scene = new Scene(this, 1500, 1000)
+    scene = new Scene(this, 1200, 700)
     scene.getStylesheets.addAll(styles: _*)
     scene.addEventFilter(KeyEvent.KEY_PRESSED,
       (event: KeyEvent) => {

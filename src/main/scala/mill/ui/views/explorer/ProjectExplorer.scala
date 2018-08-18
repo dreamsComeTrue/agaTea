@@ -2,7 +2,7 @@
 
 package mill.ui.views.explorer
 
-import javafx.collections.{FXCollections, MapChangeListener, ObservableList}
+import javafx.collections.{FXCollections, MapChangeListener, ObservableList, ObservableMap}
 import javafx.event.ActionEvent
 import javafx.geometry.Insets
 import javafx.scene.Node
@@ -54,26 +54,28 @@ class ProjectExplorer private() extends BorderPane {
     this.setCenter(outline)
 
     addProjectsListener()
+  }
 
+  def initialize(): Unit = {
     //	Add missing project non categorized
-    //    recentFileEntry = new RecentFileEntry
+    recentFileEntry = new RecentFileEntry
 
-    //    val projectPane: TitledPane = recentFileEntry.getProjectPane
-    //    VBox.setMargin(projectPane, new Insets(0, -5, 0, 0))
-    //
-    //    val openFiles: ObservableMap[String, Resource] = ProjectsRepository.instance().getOpenFiles
-    //    openFiles.addListener(new MapChangeListener[String, Resource] {
-    //      override def onChanged(change: MapChangeListener.Change[_ <: String, _ <: Resource]): Unit = {
-    //        if (openFiles.size > 0) {
-    //          val children: ObservableList[Node] = stackedTitledPanes.getChildren
-    //
-    //          if (children.size == 0) stackedTitledPanes.getChildren.add(0, projectPane)
-    //          else if (children.get(0) ne projectPane) stackedTitledPanes.getChildren.add(0, projectPane)
-    //        }
-    //        else stackedTitledPanes.getChildren.remove(projectPane)
-    //      }
-    //    })
+    val projectPane: TitledPane = recentFileEntry.getProjectPane
+    VBox.setMargin(projectPane, new Insets(0, -5, 0, 0))
 
+    val openFiles: ObservableMap[String, Resource] = ProjectsRepository.instance().getOpenFiles
+
+    openFiles.addListener(new MapChangeListener[String, Resource] {
+      override def onChanged(change: MapChangeListener.Change[_ <: String, _ <: Resource]): Unit = {
+        if (openFiles.size > 0) {
+          val children: ObservableList[Node] = stackedTitledPanes.getChildren
+
+          if (children.size == 0) stackedTitledPanes.getChildren.add(0, projectPane)
+          else if (children.get(0) ne projectPane) stackedTitledPanes.getChildren.add(0, projectPane)
+        }
+        else stackedTitledPanes.getChildren.remove(projectPane)
+      }
+    })
   }
 
   private def createButtonsRow: Node = {

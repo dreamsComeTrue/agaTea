@@ -159,7 +159,7 @@ class RecentFileEntry() {
 
     openedResourcesListView.getSelectionModel.getSelectedItems.addListener(new ListChangeListener[Resource] {
       override def onChanged(change: ListChangeListener.Change[_ <: Resource]): Unit = {
-        handleItemSelection().asInstanceOf[ListChangeListener[Resource]]
+        handleItemSelection()
       }
     })
 

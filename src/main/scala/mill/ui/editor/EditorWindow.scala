@@ -1,21 +1,17 @@
 package mill.ui.editor
 
-import java.util.Comparator
-
-import javafx.beans.property.SimpleObjectProperty
-import javafx.beans.value.{ChangeListener, ObservableValue}
-import javafx.collections.transformation.SortedList
-import javafx.collections.{FXCollections, ListChangeListener, ObservableList}
+import javafx.collections.ObservableList
 import javafx.event.ActionEvent
 import javafx.geometry.Insets
 import javafx.scene.Node
 import javafx.scene.control.{Button, SplitPane, ToggleButton, Tooltip}
 import javafx.scene.input.{MouseButton, MouseEvent}
 import javafx.scene.layout.{BorderPane, Pane, StackPane, VBox}
-import mill.controller.{AppController, FXStageInitializer, GlobalState}
 import mill.{Resources, Utilities}
-
-import scala.collection.JavaConverters._
+import mill.controller.{AppController, FXStageInitializer, GlobalState}
+import scalafx.beans.property.ObjectProperty
+import scalafx.collections.ObservableBuffer
+import scalafx.collections.ObservableBuffer.{Add, Change, Remove}
 
 /**
   * Created by Dominik 'squall' Jasiński on 2018-08-17.
@@ -26,9 +22,9 @@ object EditorWindow {
 }
 
 class EditorWindow() extends BorderPane with FXStageInitializer {
-  private val buffers: ObservableList[EditorBuffer] = FXCollections.observableArrayList[EditorBuffer]
-  private val bufferHeaders: ObservableList[EditorBufferHeader] = FXCollections.observableArrayList[EditorBufferHeader]
-  private val activeBuffer: SimpleObjectProperty[EditorBuffer] = new SimpleObjectProperty[EditorBuffer]
+  private val buffers = new ObservableBuffer[EditorBuffer]()
+  private val bufferHeaders = new ObservableBuffer[EditorBufferHeader]()
+  private val activeBuffer = new ObjectProperty[EditorBuffer]
   private var activeBufferHeader: EditorBufferHeader = _
   private var ownSplitPane: SplitPane = _
   private var editorToolbox: VBox = _
@@ -37,7 +33,7 @@ class EditorWindow() extends BorderPane with FXStageInitializer {
 
   init()
 
-  private def init() {
+  private def init(): Unit = {
     centerSplitPane.setStyle(EditorWindow.DESELECT_BORDER_STYLE)
     editorToolbox = createEditorToolbox
 
@@ -52,21 +48,24 @@ class EditorWindow() extends BorderPane with FXStageInitializer {
   }
 
   private def attachBuffersListener(): Unit = {
-    buffers.addListener(new ListChangeListener[EditorBuffer] {
-      override def onChanged(c: ListChangeListener.Change[_ <: EditorBuffer]): Unit = {
-        c.next
+    buffers.onChange((_: ObservableBuffer[EditorBuffer], c: Seq[Change[EditorBuffer]]) => {
+      val item: Change[EditorBuffer] = c.head
 
-        //  Added buffers needs to be added to the pane
-        if (c.wasAdded) {
-          for (buffer <- c.getAddedSubList.asScala) {
+      item match {
+        case Add(_, added) =>
+          //  Added buffers needs to be added to the pane
+          for (buffer <- added) {
             val headerButton: EditorBufferHeader = new EditorBufferHeader(buffer)
             headerButton.assignOnClick((event: MouseEvent) => {
               activeBufferHeader = headerButton
+
               //	Middle click on header - close tab
               if (event.getButton == MouseButton.MIDDLE) {
                 setActiveBuffer(buffer)
                 removeBuffer(buffer)
+
                 bufferHeaders.remove(headerButton)
+
                 event.consume()
               }
               else { //	Un-click all other buttons
@@ -83,17 +82,15 @@ class EditorWindow() extends BorderPane with FXStageInitializer {
               if (!(event.getButton == MouseButton.SECONDARY)) {
                 setActiveBuffer(buffer)
                 removeBuffer(buffer)
+
                 bufferHeaders.remove(headerButton)
+
                 event.consume()
               }
             })
 
-            headerButton.assignDuringDrag(new Runnable {
-              override def run(): Unit = EditorWindow.this.duringDrag()
-            })
-            headerButton.assignAfterDrag(new Runnable {
-              override def run(): Unit = EditorWindow.this.afterDrag()
-            })
+            headerButton.assignDuringDrag(() => EditorWindow.this.duringDrag())
+            headerButton.assignAfterDrag(() => EditorWindow.this.afterDrag())
             moveHeaderToTheRightOfHeaders(headerButton)
 
             bufferHeaders.add(headerButton)
@@ -101,29 +98,29 @@ class EditorWindow() extends BorderPane with FXStageInitializer {
 
             setActiveBuffer(buffer)
           }
-        }
-        else {
-          if (c.wasRemoved) {
-            for (buffer <- c.getRemoved.asScala) {
-              var bufferHeader: EditorBufferHeader = null
 
-              for (bufferHeader1 <- bufferHeaders.asScala) {
-                if (bufferHeader1.getBuffer != buffer) {
-                  bufferHeader = bufferHeader1
-                }
-              }
-
-              bufferHeaders.remove(bufferHeader)
-              centerSplitPane.getChildren.remove(buffer)
+        case Remove(_, removed) =>
+          def findBufferHeader(buffer: EditorBuffer): EditorBufferHeader = {
+            for (bufferHeader1 <- bufferHeaders) {
+              if (bufferHeader1.getBuffer != buffer) return bufferHeader1
             }
+
+            null
           }
-        }
+
+          for (buffer <- removed) {
+            setActiveBuffer(buffer)
+            removeBuffer(buffer)
+
+            bufferHeaders.remove(findBufferHeader(buffer))
+          }
       }
-    })
+    }
+    )
   }
 
   private def moveHeaderToTheRightOfHeaders(headerButton: EditorBufferHeader): Unit = {
-    if (bufferHeaders.size > 0) {
+    if (bufferHeaders.nonEmpty) {
       val lastHeaderContent: Node = bufferHeaders.get(bufferHeaders.size - 1).getContent
       headerButton.getContent.setTranslateX(lastHeaderContent.getTranslateX + lastHeaderContent.getLayoutBounds.getWidth)
     }
@@ -138,10 +135,8 @@ class EditorWindow() extends BorderPane with FXStageInitializer {
   }
 
   private def rearrangeHeaders(allHeaders: Boolean): Unit = {
-    val sorted: SortedList[EditorBufferHeader] = bufferHeaders.sorted(new Comparator[EditorBufferHeader] {
-      override def compare(o1: EditorBufferHeader, o2: EditorBufferHeader): Int = {
-        java.lang.Double.compare(o1.getContent.getTranslateX, o2.getContent.getTranslateX)
-      }
+    val sorted: ObservableBuffer[EditorBufferHeader] = bufferHeaders.sortWith((o1: EditorBufferHeader, o2: EditorBufferHeader) => {
+      java.lang.Double.compare(o1.getContent.getTranslateX, o2.getContent.getTranslateX) > 0
     })
 
     if (activeBufferHeader != null) {
@@ -150,52 +145,53 @@ class EditorWindow() extends BorderPane with FXStageInitializer {
       val activeWidth: Double = activeContent.getLayoutBounds.getWidth
       var activeIndex: Int = -1
 
-      for (i <- 0 until sorted.size()) {
-        if (sorted.get(i) == activeBufferHeader) {
+      for (i <- sorted.indices) {
+        if (sorted(i) == activeBufferHeader) {
           activeIndex = i
         }
       }
 
       if (activeIndex > 0) {
-        val actualContent: Node = sorted.get(activeIndex - 1).getContent
+        val actualContent: Node = sorted(activeIndex - 1).getContent
         val actualX: Double = actualContent.getTranslateX
         val actualWidth: Double = actualContent.getLayoutBounds.getWidth
 
         if (activeWidth > actualWidth) {
           if (activeX < actualX + actualWidth * 0.5) {
-            val tmp: EditorBufferHeader = sorted.get(activeIndex - 1)
-            sorted.set(activeIndex - 1, activeBufferHeader)
-            sorted.set(activeIndex, tmp)
+            val tmp: EditorBufferHeader = sorted(activeIndex - 1)
+            sorted(activeIndex - 1) = activeBufferHeader
+            sorted(activeIndex) = tmp
           }
         }
         else {
           val ratio: Double = activeWidth / actualWidth / 2
+
           if (activeX < actualX + actualWidth * ratio) {
-            val tmp: EditorBufferHeader = sorted.get(activeIndex - 1)
-            sorted.set(activeIndex - 1, activeBufferHeader)
-            sorted.set(activeIndex, tmp)
+            val tmp: EditorBufferHeader = sorted(activeIndex - 1)
+            sorted(activeIndex - 1) = activeBufferHeader
+            sorted(activeIndex) = tmp
           }
         }
       }
-      if (activeIndex > -1 && activeIndex < sorted.size() - 1) {
-        val actualContent: Node = sorted.get(activeIndex + 1).getContent
+      if (activeIndex > -1 && activeIndex < sorted.length - 1) {
+        val actualContent: Node = sorted(activeIndex + 1).getContent
         val actualX: Double = actualContent.getTranslateX
         val actualWidth: Double = actualContent.getLayoutBounds.getWidth
 
         if (activeWidth > actualWidth) {
           if (activeX + activeWidth * 0.5 > actualX) {
-            val tmp: EditorBufferHeader = sorted.get(activeIndex + 1)
-            sorted.set(activeIndex + 1, activeBufferHeader)
-            sorted.set(activeIndex, tmp)
+            val tmp: EditorBufferHeader = sorted(activeIndex + 1)
+            sorted(activeIndex + 1) = activeBufferHeader
+            sorted(activeIndex) = tmp
           }
         }
         else {
           val ratio: Double = activeWidth / actualWidth / 2
 
           if (activeX + activeWidth * ratio > actualX) {
-            val tmp: EditorBufferHeader = sorted.get(activeIndex + 1)
-            sorted.set(activeIndex + 1, activeBufferHeader)
-            sorted.set(activeIndex, tmp)
+            val tmp: EditorBufferHeader = sorted(activeIndex + 1)
+            sorted(activeIndex + 1) = activeBufferHeader
+            sorted(activeIndex) = tmp
           }
         }
       }
@@ -203,7 +199,7 @@ class EditorWindow() extends BorderPane with FXStageInitializer {
 
     var lastSize = 0.0
 
-    for (buffer <- sorted.asScala) {
+    for (buffer <- sorted) {
       val content: Node = buffer.getContent
 
       if (allHeaders || (activeBufferHeader != null && (buffer != activeBufferHeader))) {
@@ -215,41 +211,37 @@ class EditorWindow() extends BorderPane with FXStageInitializer {
   }
 
   private def attachActiveBufferListener(): Unit = {
-    activeBuffer.addListener(new ChangeListener[EditorBuffer] {
-      override def changed(observable: ObservableValue[_ <: EditorBuffer], oldValue: EditorBuffer, newValue: EditorBuffer): Unit = {
-        bufferHeaders.stream.forEach((header: EditorBufferHeader) => header.setSelected(false))
-        bufferHeaders.stream.filter((bufferHeader: EditorBufferHeader) => bufferHeader.getBuffer == newValue).forEach((bufferHeader: EditorBufferHeader) => {
-          bufferHeader.setSelected(true)
-          bufferHeader.getBuffer.toFront()
-        })
+    activeBuffer.onChange((_, _: EditorBuffer, newValue: EditorBuffer) => {
+      bufferHeaders.foreach((header: EditorBufferHeader) => header.setSelected(false))
+      bufferHeaders.filter((bufferHeader: EditorBufferHeader) => bufferHeader.getBuffer == newValue).foreach((bufferHeader: EditorBufferHeader) => {
+        bufferHeader.setSelected(true)
+        bufferHeader.getBuffer.toFront()
+      })
 
-        if (newValue != null) {
-          newValue.requestFocus()
-        }
+      if (newValue != null) {
+        newValue.requestFocus()
       }
-    })
+    }
+    )
   }
 
   private def attachBufferHeadersListener(): Unit = {
-    bufferHeaders.addListener(new ListChangeListener[EditorBufferHeader] {
-      override def onChanged(c: ListChangeListener.Change[_ <: EditorBufferHeader]): Unit = {
-        c.next
-        if (c.wasAdded) {
-          for (buffer <- c.getAddedSubList.asScala) {
+    bufferHeaders.onChange((_: ObservableBuffer[EditorBufferHeader], c: Seq[Change[EditorBufferHeader]]) => {
+      val item: Change[EditorBufferHeader] = c.head
+
+      item match {
+        case Add(_, added) =>
+          for (buffer <- added) {
             topContent.getChildren.add(buffer.getContent)
           }
-        }
-        else {
-          if (c.wasRemoved) {
-            for (buffer <- c.getRemoved.asScala) {
-              topContent.getChildren.remove(buffer.getContent)
-            }
+        case Remove(_, removed) =>
+          for (buffer <- removed) {
+            topContent.getChildren.remove(buffer.getContent)
           }
-        }
-
-        AppController.instance().addFXStageInitializer(EditorWindow.this)
       }
-    }.asInstanceOf[ListChangeListener[EditorBufferHeader]])
+
+      AppController.instance().addFXStageInitializer(EditorWindow.this)
+    })
   }
 
   override def fxInitialize: Boolean = {
@@ -328,12 +320,13 @@ class EditorWindow() extends BorderPane with FXStageInitializer {
     *
     * @param buffer buffer to remove
     */
-  def removeBuffer(buffer: EditorBuffer): Unit = { //	If this is an active buffer, set 'active flag' to previous one
+  def removeBuffer(buffer: EditorBuffer): Unit = {
+    //	If this is an active buffer, set 'active flag' to previous one
     var index: Int = -1
-    val removeThisBuffer: Boolean = activeBuffer.get == buffer
+    val removeThisBuffer: Boolean = activeBuffer() == buffer
 
-    if (buffer == activeBuffer.get) {
-      if (buffers.size > 0) {
+    if (buffer == activeBuffer()) {
+      if (buffers.nonEmpty) {
         index = Math.max(0, buffers.indexOf(buffer) - 1)
       }
     }
@@ -343,7 +336,7 @@ class EditorWindow() extends BorderPane with FXStageInitializer {
     GlobalState.instance().removeOpenedFile(buffer.getPath)
 
     if (removeThisBuffer) {
-      if ((index > -1) && (buffers.size > 0)) {
+      if ((index > -1) && buffers.nonEmpty) {
         setActiveBuffer(buffers.get(index))
       }
       else {
@@ -356,7 +349,7 @@ class EditorWindow() extends BorderPane with FXStageInitializer {
     * Set active buffer for this window
     */
   def setActiveBuffer(buffer: EditorBuffer): Unit = {
-    activeBuffer.set(buffer)
+    activeBuffer() = buffer
   }
 
   /**
@@ -365,16 +358,16 @@ class EditorWindow() extends BorderPane with FXStageInitializer {
     * @return active buffer
     */
   def getActiveBuffer: EditorBuffer = {
-    activeBuffer.get
+    activeBuffer()
   }
 
   def moveFocusToActiveBuffer(): Unit = {
-    if (activeBuffer.get != null) {
-      for (buffer <- buffers.asScala) {
+    if (activeBuffer() != null) {
+      for (buffer <- buffers) {
         buffer.getTextEditor.setCaretVisible(false)
       }
 
-      activeBuffer.get.getTextEditor.requestFocus()
+      activeBuffer().getTextEditor.requestFocus()
     }
   }
 

@@ -25,7 +25,7 @@ class EditorBuffer(var window: EditorWindow, var title: String) extends AnchorPa
   init()
 
   private def init() {
-    val focusedListener: ChangeListener[Boolean] = (_: ObservableValue[_ <: Boolean], _: Boolean, _: Boolean) => {
+    val focusedListener: ChangeListener[java.lang.Boolean] = (_: ObservableValue[_ <: java.lang.Boolean], _: java.lang.Boolean, _: java.lang.Boolean) => {
       if (isFocused) {
         AppController.instance().setActiveEditorWindow(EditorBuffer.this.window)
 
@@ -34,22 +34,32 @@ class EditorBuffer(var window: EditorWindow, var title: String) extends AnchorPa
         FooterArea.instance().getZoomSliderValueProperty.set((textEditor.getFontSize - FooterArea.MIN_FONT_SIZE) * 10.0)
 
         val pos = textEditor.getCaretPositionProperty
-        FooterArea.instance().setPosLabel(pos.getLineIndex.getAsInt + 1, pos.getParagraphIndex + 1)
+        FooterArea.instance().setPosLabel(pos.getParagraphIndex + 1, pos.getColumnPosition + 1)
       }
     }
 
-//    textEditor.focusedProperty.addListener(focusedListener)
-//    this.focusedProperty.addListener(focusedListener)
+    textEditor.focusedProperty.addListener(focusedListener)
+    this.focusedProperty.addListener(focusedListener)
 
     AnchorPane.setBottomAnchor(textEditor, 0.0)
     AnchorPane.setTopAnchor(textEditor, 0.0)
     AnchorPane.setLeftAnchor(textEditor, 0.0)
     AnchorPane.setRightAnchor(textEditor, 0.0)
 
-//    textEditor.setChangePositionListener((_: ObservableValue[_ <: String], _: String, newValue: String) => {
-//      AppController.instance().setFooterEditorInfoText("[" + newValue + "]")
-//    })
-//
+    textEditor.getCaretPositionProperty.paragraphIndexProperty().addListener(new ChangeListener[Integer] {
+      override def changed(observableValue: ObservableValue[_ <: Integer], t: Integer, t1: Integer): Unit = {
+        val pos = textEditor.getCaretPositionProperty
+        FooterArea.instance().setPosLabel(pos.getParagraphIndex + 1, pos.getColumnPosition + 1)
+      }
+    })
+
+    textEditor.getCaretPositionProperty.columnPositionProperty().addListener(new ChangeListener[Integer] {
+      override def changed(observableValue: ObservableValue[_ <: Integer], t: Integer, t1: Integer): Unit = {
+        val pos = textEditor.getCaretPositionProperty
+        FooterArea.instance().setPosLabel(pos.getParagraphIndex + 1, pos.getColumnPosition + 1)
+      }
+    })
+
     textEditor.setOnScroll((event: ScrollEvent) => {
       if (event.isControlDown) {
         event.consume()
@@ -89,9 +99,7 @@ class EditorBuffer(var window: EditorWindow, var title: String) extends AnchorPa
     getChildren.add(textEditor)
   }
 
-  override def requestFocus(): Unit
-
-  = {
+  override def requestFocus(): Unit = {
     textEditor.requestFocus()
   }
 
