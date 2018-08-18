@@ -9,6 +9,7 @@ import java.util.concurrent.{ExecutorService, Executors}
 import java.util.function.{Consumer, IntFunction}
 import java.util.regex.Pattern
 
+import javafx.beans.property.SimpleDoubleProperty
 import javafx.beans.value.ObservableValue
 import javafx.concurrent.Task
 import javafx.event.Event
@@ -20,24 +21,13 @@ import javafx.scene.paint.Color
 import javafx.scene.shape.Polygon
 import org.fxmisc.flowless.VirtualizedScrollPane
 import org.fxmisc.richtext.model.{StyleSpans, StyleSpansBuilder}
-import org.fxmisc.richtext.{CodeArea, LineNumberFactory}
+import org.fxmisc.richtext.{CaretSelectionBind, CodeArea, LineNumberFactory}
 import org.fxmisc.wellbehaved.event.{EventPattern, InputMap, Nodes}
 import org.reactfx.value.Val
 
 import scala.language.implicitConversions
 
 class TextEditor(val tabName: String, val text: String, val path: String) extends AnchorPane {
-  def setFontSize(size: Double) = ???
-
-  def showLineHighlight(getHighlightCurrentLine: Boolean) = ???
-
-  def showLineNumbers(getLineNumbersVisible: Boolean) = ???
-
-  def setSyntaxHighlightingEnabled(getSyntaxHighlightingEnabled: Boolean) = ???
-
-  def setCaretVisible(bool: Boolean) = ???
-
-
   private val KEYWORDS =
     util.Arrays.asList("abstract", "assert", "boolean", "break", "byte", "case", "catch", "char", "class", "const", "continue", "default", "def", "do", "double", "else", "enum", "extends", "final", "finally", "float", "for", "goto", "if", "implements", "import", "instanceof", "int", "interface", "long", "native", "new", "object", "override", "package", "private", "protected", "public", "return", "short", "static", "strictfp", "super", "switch", "synchronized", "this", "throw", "throws", "transient", "try", "void", "val", "var", "volatile", "while")
 
@@ -53,6 +43,8 @@ class TextEditor(val tabName: String, val text: String, val path: String) extend
 
 
   private var executor: ExecutorService = _
+  private val fontSize = new SimpleDoubleProperty(14)
+
   val codeAreaVirtual: VirtualizedScrollPane[CodeArea] = createCodeArea(text)
 
   implicit def toConsumer[A](function: A => Unit): Consumer[A] = (arg: A) => function.apply(arg)
@@ -135,6 +127,22 @@ class TextEditor(val tabName: String, val text: String, val path: String) extend
 
     task
   }
+
+  def getFontSize(): Double = fontSize.get()
+
+  def getFontSizeProperty: SimpleDoubleProperty = fontSize
+
+  def setFontSize(size: Double): Unit = fontSize.set(size)
+
+  def getCaretPositionProperty: CaretSelectionBind[util.Collection[String], String, util.Collection[String]] = codeAreaVirtual.getContent.getCaretSelectionBind
+
+  def showLineHighlight(getHighlightCurrentLine: Boolean) = {}
+
+  def showLineNumbers(getLineNumbersVisible: Boolean) = {}
+
+  def setSyntaxHighlightingEnabled(getSyntaxHighlightingEnabled: Boolean) = {}
+
+  def setCaretVisible(bool: Boolean) = {}
 
   private def applyHighlighting(highlighting: StyleSpans[util.Collection[String]]): Unit = {
     codeAreaVirtual.getContent.setStyleSpans(0, highlighting)

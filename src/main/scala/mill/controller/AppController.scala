@@ -125,7 +125,7 @@ class AppController private(val mainContent: MainContent) {
 
   def getActiveEditorBuffer: EditorBuffer = EditorArea.instance().getActiveEditorBuffer
 
-  def getCurrentFontSize: DoubleProperty = getActiveEditorBuffer.getTextEditor.getFontSize
+  def getCurrentFontSize: DoubleProperty = getActiveEditorBuffer.getTextEditor.getFontSizeProperty
 
 }
 

@@ -17,7 +17,7 @@ import org.reactfx.value.Val
 class FooterArea private() extends BorderPane {
   private val infoText = new TextField("File:")
   private val posLabel = new Label("[1:2]")
-  private var zoomSlider =  new Slider
+  private var zoomSlider = new Slider
 
   private val messageLabel = new Label
   private val infoLabel = new Label
@@ -73,7 +73,8 @@ class FooterArea private() extends BorderPane {
       override def changed(observable: ObservableValue[_ <: Number], oldValue: Number, newValue: Number): Unit = {
         val size = newValue.doubleValue / 10.0 + FooterArea.MIN_FONT_SIZE
 
-        zoomLabel.setText(String.format("%2.0f", newValue.floatValue() / 2.f) + "%")
+        val newVal: java.lang.Float = newValue.floatValue() / 2.0f
+        zoomLabel.setText(String.format("%2.0f", newVal) + "%")
 
         if (AppController.instance().getActiveEditorBuffer != null) AppController.instance().getActiveEditorBuffer.getTextEditor.setFontSize(size)
       }

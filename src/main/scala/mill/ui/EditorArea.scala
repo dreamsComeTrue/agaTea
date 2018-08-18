@@ -4,6 +4,7 @@ package mill.ui
 
 import java.io.File
 
+import com.sun.javafx.scene.control.skin.SplitPaneSkin
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.collections.{FXCollections, ListChangeListener}
@@ -11,6 +12,7 @@ import javafx.event.ActionEvent
 import javafx.geometry.Orientation
 import javafx.scene.control.{Label, SplitPane, Tab, TabPane}
 import javafx.scene.image.{Image, ImageView}
+import javafx.scene.input.{MouseButton, MouseEvent}
 import javafx.scene.layout.{BorderPane, StackPane}
 import mill.controller.{AppController, FXStageInitializer, GlobalState}
 import mill.resources.Resource
@@ -24,6 +26,10 @@ import scala.collection.JavaConverters._
 import scala.io.Source
 
 class EditorArea private() extends FXStageInitializer {
+  private val windowContainer = new EditorWindowContainer
+  private val editorWindows = FXCollections.observableArrayList[EditorWindow]
+  private var activeEditorWindow = new SimpleObjectProperty[EditorWindow]()
+
   private val tabPane = createTabPane()
   private var centerStack: StackPane = createCenterStack()
   private val editorConsole: EditorConsole = new EditorConsole
@@ -31,11 +37,37 @@ class EditorArea private() extends FXStageInitializer {
   private var consoleSlider: SplitPaneDividerSlider = createConsoleSlider()
   private var consoleWindowVisible = true
 
-  private val windowContainer = new EditorWindowContainer
-  private val editorWindows = FXCollections.observableArrayList[EditorWindow]
-  private var activeEditorWindow: SimpleObjectProperty[EditorWindow] = _
+  def init(): SplitPane = {
+    initActiveEditorWindow()
 
-  override def fxInitialize: Boolean = true
+    consoleSplitPane
+  }
+
+  def initActiveEditorWindow(): Unit = {
+    activeEditorWindow.addListener(new ChangeListener[EditorWindow] {
+      override def changed(observableValue: ObservableValue[_ <: EditorWindow], oldWindow: EditorWindow, newWindow: EditorWindow): Unit = {
+        if (oldWindow != null) {
+          oldWindow.setActiveBuffer(null)
+          oldWindow.setActive(false)
+        }
+        if (newWindow != null) newWindow.setActive(true)
+        if (newWindow == null) FooterArea.instance().setPosLabel(0, 0)
+      }
+    })
+  }
+
+  override def fxInitialize: Boolean = {
+    val skin = consoleSplitPane.getSkin.asInstanceOf[SplitPaneSkin]
+    val divider = skin.getChildren.get(2)
+
+    divider.setOnMouseClicked((event: MouseEvent) => {
+      if (event.getButton == MouseButton.PRIMARY && event.getClickCount == 2) setConsoleWindowVisible(!isConsoleWindowVisible)
+    })
+
+    if (activeEditorWindow.get != null) activeEditorWindow.get.moveFocusToActiveBuffer()
+
+    true
+  }
 
   def createCenterStack(): StackPane = {
     val centerContent = new BorderPane
@@ -73,10 +105,6 @@ class EditorArea private() extends FXStageInitializer {
     })
 
     consoleSlider
-  }
-
-  def init(): SplitPane = {
-    consoleSplitPane
   }
 
   private def createLogo(): ImageView = {

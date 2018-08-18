@@ -296,11 +296,11 @@ class EditorWindow() extends BorderPane with FXStageInitializer {
     VBox.setMargin(bookmarkButton, new Insets(10, 0, 0, 0))
     VBox.setMargin(searchButton, new Insets(10, 0, 0, 0))
 
-    searchButton.setOnAction((event: ActionEvent) => {
+    searchButton.setOnAction((_: ActionEvent) => {
     })
 
     editorToolbox.getChildren.addAll(cutButton, copyButton, pasteButton, undoButton, redoButton, bookmarkButton, bookmarksButton, previousBookmarkButton, nextBookmarkButton, searchButton, formatButton, wordWrapButton)
-    editorToolbox.setOnMouseClicked((event: MouseEvent) => AppController.instance().setActiveEditorWindow(EditorWindow.this))
+    editorToolbox.setOnMouseClicked((_: MouseEvent) => AppController.instance().setActiveEditorWindow(EditorWindow.this))
 
     editorToolbox
   }

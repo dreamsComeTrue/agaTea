@@ -25,27 +25,31 @@ class EditorBuffer(var window: EditorWindow, var title: String) extends AnchorPa
   init()
 
   private def init() {
-    val focusedListener: ChangeListener[Boolean] = new ChangeListener[Boolean] {
-      override def changed(observable: ObservableValue[_ <: Boolean], oldValue: Boolean, newValue: Boolean): Unit = {
-        if (isFocused) {
-          AppController.instance().setActiveEditorWindow(EditorBuffer.this.window)
+    val focusedListener: ChangeListener[Boolean] = (_: ObservableValue[_ <: Boolean], _: Boolean, _: Boolean) => {
+      if (isFocused) {
+        AppController.instance().setActiveEditorWindow(EditorBuffer.this.window)
 
-          EditorBuffer.this.window.setActiveBuffer(EditorBuffer.this)
+        EditorBuffer.this.window.setActiveBuffer(EditorBuffer.this)
 
-          FooterArea.instance().getZoomSliderValueProperty.set((textEditor.getFontSize.doubleValue - FooterArea.MIN_FONT_SIZE) * 10.0)
-          FooterArea.instance().setInfoText("[" + textEditor.getCaretPositionProperty.get + "]")
+        FooterArea.instance().getZoomSliderValueProperty.set((textEditor.getFontSize - FooterArea.MIN_FONT_SIZE) * 10.0)
+
+        val pos = textEditor.getCaretPositionProperty
+        FooterArea.instance().setPosLabel(pos.getLineIndex.getAsInt + 1, pos.getParagraphIndex + 1)
       }
-    }}
+    }
 
-    textEditor.focusedProperty.addListener(focusedListener)
-    this.focusedProperty.addListener(focusedListener)
+//    textEditor.focusedProperty.addListener(focusedListener)
+//    this.focusedProperty.addListener(focusedListener)
 
     AnchorPane.setBottomAnchor(textEditor, 0.0)
     AnchorPane.setTopAnchor(textEditor, 0.0)
     AnchorPane.setLeftAnchor(textEditor, 0.0)
     AnchorPane.setRightAnchor(textEditor, 0.0)
 
-    textEditor.setChangePositionListener((observable: ObservableValue[_ <: String], oldValue: String, newValue: String) => AppController.instance().setFooterEditorInfoText("[" + newValue + "]"))
+//    textEditor.setChangePositionListener((_: ObservableValue[_ <: String], _: String, newValue: String) => {
+//      AppController.instance().setFooterEditorInfoText("[" + newValue + "]")
+//    })
+//
     textEditor.setOnScroll((event: ScrollEvent) => {
       if (event.isControlDown) {
         event.consume()
@@ -58,7 +62,7 @@ class EditorBuffer(var window: EditorWindow, var title: String) extends AnchorPa
       }
     })
 
-    FooterArea.instance().getZoomSliderValueProperty.set((textEditor.getFontSize.doubleValue - FooterArea.MIN_FONT_SIZE) * 10.0)
+    FooterArea.instance().getZoomSliderValueProperty.set((textEditor.getFontSize - FooterArea.MIN_FONT_SIZE) * 10.0)
 
     ApplicationSettings.instance().syntaxHighlightingEnabledProperty.addListener(new ChangeListener[lang.Boolean] {
       override def changed(observable: ObservableValue[_ <: lang.Boolean], oldValue: lang.Boolean, newValue: lang.Boolean): Unit = {
