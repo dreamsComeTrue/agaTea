@@ -8,8 +8,8 @@ import javafx.scene.layout.{BorderPane, StackPane, VBox}
 import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
 import javafx.scene.transform.{Scale, Translate}
-import javafx.scene.{Group, Node, PerspectiveCamera}
-import mill.controller.AppController
+import javafx.scene.{Group, Node, PerspectiveCamera, Scene}
+import mill.ui.MainContent
 import mill.ui.views.structure.{ClassObject, CurveConnectorObject}
 import mill.{Resources, Utilities}
 import org.apache.commons.collections4.keyvalue.DefaultKeyValue
@@ -17,7 +17,7 @@ import org.controlsfx.tools.Borders
 
 import scala.collection.mutable.ListBuffer
 
-class StructureView private(val container: StackPane) extends BorderPane {
+class StructureView private(val container: StackPane, scene: Scene) extends BorderPane {
   private var camera: PerspectiveCamera = _
   private var cameraTranslate: Translate = _
   private var cameraScale: Scale = _
@@ -33,13 +33,14 @@ class StructureView private(val container: StackPane) extends BorderPane {
 
   init()
 
-  def init(): Unit = {
+  private def init(): Unit = {
     val clipRect = new Rectangle(0, 0, container.getWidth, container.getHeight)
 
     clipRect.widthProperty.bind(Bindings.subtract(container.widthProperty, 4))
     clipRect.heightProperty.bind(Bindings.subtract(container.heightProperty, 2))
 
-    AppController.instance().mainContent.getScene.setCamera(camera)
+    scene.setCamera(camera)
+
     root = new Group
     root.setManaged(false)
     root.setAutoSizeChildren(false)
@@ -111,7 +112,7 @@ class StructureView private(val container: StackPane) extends BorderPane {
   }
 
   def setVisibility(visible: Boolean): Unit = {
-    val content = AppController.instance().mainContent
+    val content = MainContent.instance()
 
     if (visible) {
       content.getScene.setCamera(camera)
@@ -166,8 +167,8 @@ class StructureView private(val container: StackPane) extends BorderPane {
 object StructureView {
   private var _instance: StructureView = _
 
-  def initialize(container: StackPane): StructureView = {
-    if (_instance == null) _instance = new StructureView(container)
+  def initialize(container: StackPane, scene: Scene): StructureView = {
+    if (_instance == null) _instance = new StructureView(container, scene)
 
     _instance
   }

@@ -5,7 +5,7 @@ package mill.ui.views.explorer
 import java.lang
 
 import javafx.beans.value.{ChangeListener, ObservableValue}
-import javafx.collections.{ListChangeListener, ObservableList}
+import javafx.collections.ListChangeListener
 import javafx.event.ActionEvent
 import javafx.scene.control._
 import javafx.scene.image.{Image, ImageView}
@@ -18,13 +18,13 @@ import mill.resources.{Project, Resource}
 import mill.ui.controls.{ConfirmContentBar, EnterFieldContentBar, LabelSeparatorMenuItem, TitledPaneContext}
 import mill.{Resources, Utilities}
 import org.apache.commons.io.FilenameUtils
-
-import scala.collection.JavaConverters._
+import scalafx.collections.ObservableBuffer
+import scalafx.collections.ObservableBuffer.{Add, Change, Remove}
 
 class ProjectEntry(val imagePath: String, val title: String, var project: Project) extends FXStageInitializer {
   private var projectPane: TitledPaneContext = _
   private var projectPaneContextMenuClicked = false
-  private var projectScroll = new ScrollPane
+  private val projectScroll = new ScrollPane
   private var tree: TreeView[Resource] = _
   private var rootItem = new TreeItem[Resource](null)
   private var draggedResource: Resource = _
@@ -32,7 +32,7 @@ class ProjectEntry(val imagePath: String, val title: String, var project: Projec
 
   init()
 
-  private def init() {
+  private def init(): Unit = {
     val image = new Image(Utilities.getResource(imagePath))
     val imageView1 = new ImageView(image)
     val iconSize = 17.0
@@ -89,7 +89,7 @@ class ProjectEntry(val imagePath: String, val title: String, var project: Projec
     tree = new TreeView[Resource](rootItem)
     tree.setShowRoot(false)
     tree.getStyleClass.add("tree-view-no-border")
-    tree.setCellFactory((p: TreeView[Resource]) => new ResourceTreeCellImpl(this))
+    tree.setCellFactory((_: TreeView[Resource]) => new ResourceTreeCellImpl(this))
     tree.setContextMenu(contextMenu)
 
     projectScroll.setContent(tree)
@@ -131,31 +131,32 @@ class ProjectEntry(val imagePath: String, val title: String, var project: Projec
       }
     })
 
-    project.getPackageFiles.addListener(new ListChangeListener[PackageFile] {
-      override def onChanged(change: ListChangeListener.Change[_ <: PackageFile]): Unit = {
-        change.next
+    project.getPackageFiles.onChange((_: ObservableBuffer[PackageFile], c: Seq[Change[PackageFile]]) => {
+      val item: Change[PackageFile] = c.head
 
-        if (change.wasRemoved) {
-          val removedPackages = change.getRemoved
+      item match {
+        case Add(_, added) =>
+          for (packageFile <- added) {
+            refreshPackage(rootItem, packageFile)
+          }
 
-          for (packageFile <- removedPackages.asScala) {
-            for (child <- rootItem.getChildren.asScala) {
-              if (child == packageFile) {
+        case Remove(_, removed) =>
+          for (packageFile <- removed) {
+            for (j <- 0 until rootItem.getChildren.size()) {
+              val child: TreeItem[Resource] = rootItem.getChildren.get(j)
+
+              if (child.getValue == packageFile) {
                 rootItem.getChildren.remove(child)
               }
             }
           }
-        }
-        else if (change.wasAdded) {
-          val addedPackages = change.getAddedSubList
 
-          for (packageFile <- addedPackages.asScala) {
-            refreshPackage(rootItem, packageFile)
-          }
-        }
-        alignProjectScrollSize()
+        case _ =>
       }
-    })
+
+      alignProjectScrollSize()
+    }
+    )
 
     projectPane.setGraphic(anchor)
     projectPane.getGraphic.setOnContextMenuRequested((event: ContextMenuEvent) => contextMenu.show(projectPane.getGraphic, event.getScreenX, event.getScreenY))
@@ -218,6 +219,7 @@ class ProjectEntry(val imagePath: String, val title: String, var project: Projec
         projectPaneContextMenuClicked = false
       }
       else contentBarTextField.setText(ProjectExplorer.instance().getSelectedTreeItems.get(0).getValue.getName)
+
       contentBarLabel.setText(Resources.ENTER_NEW_NAME)
       contentBar.show(Resources.Images.IMAGE_PEN)
     })
@@ -250,7 +252,7 @@ class ProjectEntry(val imagePath: String, val title: String, var project: Projec
     //	Refresh all packages and resources at start
     rootItem.getChildren.clear()
 
-    for (childPackage <- project.getPackageFiles.asScala) {
+    for (childPackage <- project.getPackageFiles) {
       refreshPackage(rootItem, childPackage)
     }
 
@@ -298,7 +300,7 @@ class ProjectEntry(val imagePath: String, val title: String, var project: Projec
       }
     })
 
-    titleRegion.setOnDragExited((event: DragEvent) => {
+    titleRegion.setOnDragExited((_: DragEvent) => {
       if (!projectPane.getStyleClass.contains("titled-node-exited")) {
         if (projectPane.getStyleClass.contains("titled-node-entered")) projectPane.getStyleClass.remove("titled-node-entered")
         projectPane.getStyleClass.add("titled-node-exited")
@@ -341,25 +343,20 @@ class ProjectEntry(val imagePath: String, val title: String, var project: Projec
 
     //	If we adding packages - go from the beginning of the node
     if (resource.getValue.isInstanceOf[PackageFile]) {
-      var i = 0
-
-      for (child <- children.asScala) {
-        val res = child.getValue
+      for (i <- 0 until children.size()) {
+        val res = children.get(i).getValue
 
         if (res.isInstanceOf[PackageFile]) if (res.getName.compareTo(resource.getValue.getName) > 0) {
           nodeToAttachTo.getChildren.add(i, resource)
           return
         }
-
-        i += 1
       }
 
       nodeToAttachTo.getChildren.add(resource)
     }
     else {
       for (i <- children.size - 1 to 0 by -1) {
-        val child = children.get(i)
-        val res = child.getValue
+        val res = children.get(i).getValue
 
         if (!res.isInstanceOf[PackageFile]) if (res.getName.compareTo(resource.getValue.getName) > 0) {
           nodeToAttachTo.getChildren.add(i, resource)
@@ -379,18 +376,18 @@ class ProjectEntry(val imagePath: String, val title: String, var project: Projec
     addInOrder(nodeToAttachTo, packageItem)
 
     //	Add all sub-packages
-    for (childPackage <- childPackages.asScala) {
+    for (childPackage <- childPackages) {
       val childPackageItem = new TreeItem[Resource](childPackage)
 
       addInOrder(packageItem, childPackageItem)
 
-      for (innerPackage <- childPackage.getPackages.asScala) {
+      for (innerPackage <- childPackage.getPackages) {
         refreshPackage(childPackageItem, innerPackage)
       }
     }
 
     //	Add all belonging classes
-    for (classFile <- childClasses.asScala) {
+    for (classFile <- childClasses) {
       val classItem = new TreeItem[Resource](classFile)
 
       addInOrder(packageItem, classItem)
@@ -407,11 +404,12 @@ class ProjectEntry(val imagePath: String, val title: String, var project: Projec
         if (c.wasRemoved) {
           val removedPackages = c.getRemoved
 
-          for (removedPackage: PackageFile <- removedPackages.asScala) {
-            val children: ObservableList[TreeItem[Resource]] = packageItem.getChildren
+          for (i <- 0 until removedPackages.size()) {
+            val removedPackage = removedPackages.get(i)
+            val children = packageItem.getChildren
 
-            for (resourceIt <- children.asScala) {
-              val res = resourceIt.getValue
+            for (j <- 0 until children.size()) {
+              val res = children.get(j).getValue
 
               if (res.isInstanceOf[PackageFile]) {
                 if (res == removedPackage) {
@@ -424,7 +422,8 @@ class ProjectEntry(val imagePath: String, val title: String, var project: Projec
         else if (c.wasAdded) {
           val addedPackages = c.getAddedSubList
 
-          for (addedPackage <- addedPackages.asScala) {
+          for (i <- 0 until addedPackages.size()) {
+            val addedPackage = addedPackages.get(i)
             refreshPackage(packageItem, addedPackage)
           }
         }
@@ -442,13 +441,14 @@ class ProjectEntry(val imagePath: String, val title: String, var project: Projec
       override def onChanged(c: ListChangeListener.Change[_ <: ClassFile]): Unit = {
         c.next
         if (c.wasRemoved) {
-          val removedClasses = c.getRemoved.asScala
+          val removedClasses = c.getRemoved
 
-          for (removedClass <- removedClasses) {
-            val children: ObservableList[TreeItem[Resource]] = packageItem.getChildren
+          for (i <- 0 until removedClasses.size()) {
+            val removedClass = removedClasses.get(i)
+            val children = packageItem.getChildren
 
-            for (resourceIt <- children.asScala) {
-              val res = resourceIt.getValue
+            for (j <- 0 until children.size()) {
+              val res = children.get(j).getValue
 
               if (res.isInstanceOf[ClassFile]) {
                 if (res == removedClass) {
@@ -459,10 +459,12 @@ class ProjectEntry(val imagePath: String, val title: String, var project: Projec
           }
         }
         else if (c.wasAdded) {
-          val addedClasses = c.getAddedSubList.asScala
+          val addedClasses = c.getAddedSubList
 
-          for (addedClass <- addedClasses) {
+          for (i <- 0 until addedClasses.size()) {
+            val addedClass = addedClasses.get(i)
             val classItem = new TreeItem[Resource](addedClass)
+
             addInOrder(packageItem, classItem)
           }
         }
@@ -491,16 +493,17 @@ class ProjectEntry(val imagePath: String, val title: String, var project: Projec
     var count = 0
 
     if (treeItem != null) {
-      val children = treeItem.getChildren.asScala
+      val children = treeItem.getChildren
 
       if (children != null && treeItem.isExpanded) {
         count += children.size
 
-        for (child <- children) {
-          count += countAllExpandedTreeItemChildren(child)
+        for (i <- 0 until children.size()) {
+          count += countAllExpandedTreeItemChildren(children.get(i))
         }
       }
     }
+
     count
   }
 

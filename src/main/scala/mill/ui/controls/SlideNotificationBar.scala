@@ -16,8 +16,6 @@ import javafx.scene.{Node, Parent}
 import javafx.util.Duration
 import mill.{Resources, Utilities}
 
-import scala.collection.JavaConverters._
-
 object SlideNotificationBar {
   val DEFAULT_HEIGHT = 50.0
 }
@@ -106,7 +104,9 @@ class SlideNotificationBar(val wrappedContent: Node, val ownContent: Node) exten
   }
 
   private def isChildFocused(parent: Parent): Boolean = {
-    for (child <- parent.getChildrenUnmodifiable.asScala) {
+    for (i <- 0 until parent.getChildrenUnmodifiable.size()) {
+      val child = parent.getChildrenUnmodifiable.get(i)
+
       if (child.isFocused) {
         return true
       }
@@ -121,7 +121,9 @@ class SlideNotificationBar(val wrappedContent: Node, val ownContent: Node) exten
   }
 
   private def injectFocusToAllChildren(parent: Parent): Unit = {
-    for (child <- parent.getChildrenUnmodifiable.asScala) {
+    for (i <- 0 until parent.getChildrenUnmodifiable.size()) {
+      val child = parent.getChildrenUnmodifiable.get(i)
+
       child.focusedProperty.addListener(focusListener)
 
       child match {

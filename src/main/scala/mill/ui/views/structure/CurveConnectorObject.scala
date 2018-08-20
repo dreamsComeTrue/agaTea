@@ -17,7 +17,7 @@ class CurveConnectorObject(val class1: ClassObject, val class2: ClassObject) ext
 
   init()
 
-  def init() = {
+  private def init(): Boolean = {
     val curve: CubicCurve = createStartingCurve(class1, class2)
     curve.setOnMouseEntered((_: MouseEvent) => curve.setStroke(Color.YELLOW))
     curve.setOnMouseExited((_: MouseEvent) => curve.setStroke(Color.WHITE))

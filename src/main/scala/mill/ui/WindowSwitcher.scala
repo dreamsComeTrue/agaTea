@@ -9,6 +9,7 @@ import mill.Resources
 
 class WindowSwitcher extends VBox {
   private var windowsList: ListView[String] = _
+  private var currIndex: Int = 0
 
   init()
 
@@ -32,5 +33,29 @@ class WindowSwitcher extends VBox {
 
     this.setPrefHeight(count * ITEM_HEIGHT)
     this.setMaxHeight(count * ITEM_HEIGHT)
+  }
+
+  def actionSwitchToPreviousToolWindow(): Unit = {
+    if (isVisible) currIndex -= 1
+
+    setVisible(true)
+
+    if (currIndex < 0) currIndex = windowsList.getItems.size - 1
+
+    windowsList.requestFocus()
+    windowsList.getSelectionModel.select(currIndex)
+    windowsList.getFocusModel.focus(currIndex)
+  }
+
+  def actionSwitchToNextToolWindow(): Unit = {
+    if (isVisible) currIndex += 1
+
+    setVisible(true)
+
+    if (currIndex >= windowsList.getItems.size) currIndex = 0
+
+    windowsList.requestFocus()
+    windowsList.getSelectionModel.select(currIndex)
+    windowsList.getFocusModel.focus(currIndex)
   }
 }

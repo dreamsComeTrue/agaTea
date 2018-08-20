@@ -4,10 +4,8 @@ package mill.resources.files
 
 import java.io.File
 
-import javafx.collections.{FXCollections, ObservableList}
 import mill.resources.{Project, Resource, ResourceHandler}
-
-import scala.collection.JavaConverters._
+import scalafx.collections.ObservableBuffer
 
 object PackageFile {
 
@@ -30,8 +28,8 @@ object PackageFile {
 }
 
 class PackageFile(var project: Project, name: String, var outDirPath: String, var rawDirectory: Boolean) extends Resource(name) {
-  private val packages = FXCollections.observableArrayList[PackageFile]
-  private val classes = FXCollections.observableArrayList[ClassFile]
+  private val packages = new ObservableBuffer[PackageFile]()
+  private val classes = new ObservableBuffer[ClassFile]()
 
   override def getFullPath: String = {
     if ("src" == this.name) return project.getSrcDirectory + File.separatorChar
@@ -49,10 +47,10 @@ class PackageFile(var project: Project, name: String, var outDirPath: String, va
 
   def isRawDirectory: Boolean = rawDirectory
 
-  def getPackages: ObservableList[PackageFile] = packages
+  def getPackages: ObservableBuffer[PackageFile] = packages
 
   def findSubPackage(name: String): PackageFile = {
-    for (packageFile <- asScalaBuffer(packages)) {
+    for (packageFile <- packages) {
       if (packageFile.getName == name) return packageFile
     }
     null
@@ -60,13 +58,14 @@ class PackageFile(var project: Project, name: String, var outDirPath: String, va
 
   def addPackage(name: String): PackageFile = if (findSubPackage(name) == null) {
     val pf = new PackageFile(this.getProject, name, outDirPath, false)
-    packages.add(pf)
+
+    packages += pf
 
     pf
   }
   else null
 
-  def getClasses: ObservableList[ClassFile] = classes
+  def getClasses: ObservableBuffer[ClassFile] = classes
 
   def getOutDirPath: String = outDirPath
 

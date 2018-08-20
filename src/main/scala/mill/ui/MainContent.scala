@@ -5,33 +5,35 @@ package mill.ui
 import java.io.File
 import java.lang
 
-import controls.SlideNotificationBar
 import javafx.application.Platform
 import javafx.beans.value.{ChangeListener, ObservableValue}
+import javafx.scene.control.ListView
 import javafx.scene.input._
-import javafx.scene.layout.{BorderPane, GridPane, Pane, StackPane}
+import javafx.scene.layout._
 import javafx.scene.{Node, Scene}
 import javafx.stage.{FileChooser, Stage}
-import mill.controller.{AppController, ApplicationState}
+import mill.controller.{AppController, ApplicationState, FlowState, StateManager}
+import mill.model.ActionShortcut
 import mill.resources.ResourceFactory
 import mill.resources.settings.ApplicationSettings
+import mill.ui.controls.SlideNotificationBar
 import mill.ui.views._
+import mill.ui.views.explorer.ProjectExplorer
 import mill.{EditorMode, Resources, ViewTransition}
 
-import scala.collection.JavaConverters._
-
-class MainContent(stage: Stage) extends BorderPane {
+class MainContent private(stage: Stage) extends BorderPane {
   private val stylesURL = getClass.getResource("/app_styles.css").toExternalForm
   private val dialogURL = getClass.getResource("/dialog_styles.css").toExternalForm
   private val splitPaneURL = getClass.getResource("/split_pane.css").toExternalForm
   private val scrollbarsURL = getClass.getResource("/scrollbars.css").toExternalForm
   private val tabPaneURL = getClass.getResource("/tab_pane.css").toExternalForm
   private val codeAreaURL = getClass.getResource("/code_area.css").toExternalForm
-  private val searchBoxURL = getClass.getResource("/searchbox.css").toExternalForm
+  private val searchBoxURL = getClass.getResource("/search_box.css").toExternalForm
 
   private val styles = List(stylesURL, dialogURL, splitPaneURL, scrollbarsURL, tabPaneURL, codeAreaURL, searchBoxURL)
 
   private val windowSwitcher: WindowSwitcher = new WindowSwitcher
+  private val windowsList: ListView[String] = new ListView[String]
   var scene: Scene = _
   var topPane: GridPane = _
   var bottomPane: FooterArea = _
@@ -41,15 +43,11 @@ class MainContent(stage: Stage) extends BorderPane {
   private var transition: ViewTransition = _
   private var viewsTransition: ViewTransition = _
 
-  private var fileSelectView: FileSelectView = _
-  private var newResourceView: NewResourceView = _
-  private var openResourceView: OpenResourceView = _
-
-  private var snb : SlideNotificationBar = _
+  private var snb: SlideNotificationBar = _
 
   init()
 
-  def init(): Unit = {
+  private def init(): Unit = {
     scene = new Scene(this, 1200, 700)
     scene.getStylesheets.addAll(styles: _*)
     scene.addEventFilter(KeyEvent.KEY_PRESSED,
@@ -69,19 +67,13 @@ class MainContent(stage: Stage) extends BorderPane {
         }
       })
 
-    AppController.initialize(this)
-
     topPane = HeaderArea.instance()
     bottomPane = FooterArea.instance()
     centerPane = createCenterPane()
 
     snb = new SlideNotificationBar(centerPane, null)
 
-    fileSelectView = new FileSelectView
-    newResourceView = new NewResourceView
-    openResourceView = new OpenResourceView
-
-    fileSelectView.setFileCanceledEvent((_: FileSelectView.FileSelectEvent) => AppController.instance().switchToLastState())
+    FileSelectView.instance().setFileCanceledEvent((_: FileSelectView.FileSelectEvent) => AppController.instance().switchToLastState())
 
     setTop(topPane)
     setBottom(bottomPane)
@@ -103,8 +95,8 @@ class MainContent(stage: Stage) extends BorderPane {
       if (db.hasFiles) {
         success = true
 
-        for (file <- db.getFiles.asScala) {
-          val filePath = file.getAbsolutePath
+        for (i <- 0 until db.getFiles.size()) {
+          val filePath = db.getFiles.get(i).getAbsolutePath
           ResourceFactory.handleFileOpen(filePath)
         }
       }
@@ -125,45 +117,60 @@ class MainContent(stage: Stage) extends BorderPane {
     })
 
     this.setOnKeyPressed((event: KeyEvent) => {
-      //        val controller = AppController.instance()
-      //        val flowState = StateManager.instance().getLastFlowState
-      //
-      //        if (ActionShortcut.checkKeyCombination(ActionShortcut.ActionType.CLOSE_DOCUMENT, event)) EditorArea.instance().actionCloseDocument()
-      //        else if (ActionShortcut.checkKeyCombination(ActionShortcut.ActionType.SELECT_PREVIOUS_BUFFER, event)) EditorArea.get.actionMoveToPreviousBuffer()
-      //        else if (ActionShortcut.checkKeyCombination(ActionShortcut.ActionType.SELECT_NEXT_BUFFER, event)) EditorArea.get.actionMoveToNextBuffer()
-      //        else if (ActionShortcut.checkKeyCombination(ActionShortcut.ActionType.SELECT_NEXT_BUFFER, event)) EditorArea.get.actionMoveToNextBuffer()
-      //        else if (ActionShortcut.checkKeyCombination(ActionShortcut.ActionType.SWITCH_TO_PREVIOUS_DOCUMENT, event)) EditorArea.get.actionSwitchToPreviousFile()
-      //        else if (ActionShortcut.checkKeyCombination(ActionShortcut.ActionType.SWITCH_TO_NEXT_DOCUMENT, event)) EditorArea.get.actionSwitchToNextFile()
-      //        else if (ActionShortcut.checkKeyCombination(ActionShortcut.ActionType.SELECT_PREVIOUS_TOOL_WINDOW, event)) actionSwitchToPreviousToolWindow()
-      //        else if (ActionShortcut.checkKeyCombination(ActionShortcut.ActionType.SELECT_NEXT_TOOL_WINDOW, event)) actionSwitchToNextToolWindow()
-      //        else if (ActionShortcut.checkKeyCombination(ActionShortcut.ActionType.QUICK_ACCESS, event)) HeaderArea.get.activateQuickAccess()
-      //        else if (ActionShortcut.checkKeyCombination(ActionShortcut.ActionType.NEW_FILE, event)) controller.setFlowState(FlowState.NEW_RESOURCE)
-      //        else if (ActionShortcut.checkKeyCombination(ActionShortcut.ActionType.OPEN_FILE, event)) controller.setFlowState(FlowState.OPEN_RESOURCE)
-      //        else if (ActionShortcut.checkKeyCombination(ActionShortcut.ActionType.OPEN_SETTINGS, event)) controller.setFlowState(FlowState.SETTINGS)
-      //        else if (ActionShortcut.checkKeyCombination(ActionShortcut.ActionType.PRODUCTIVE_MODE, event)) controller.switchProductiveMode(!controller.isProductiveMode)
-      //        else event.getCode match {
-      //          case ESCAPE =>
-      //            if (flowState != null) flowState match {
-      //              case NEW_RESOURCE =>
-      //                newResourceView.keyPressed(event)
-      //              case OPEN_RESOURCE =>
-      //                openResourceView.keyPressed(event)
-      //              case SETTINGS =>
-      //                SettingsView.instance().keyPressed(event)
-      //            }
-      //            break //todo: break is not supported
-      //        }
+      val flowState = StateManager.instance().getLastFlowState
+
+      if (ActionShortcut.checkKeyCombination(ActionShortcut.ActionType.CLOSE_DOCUMENT, event)) EditorArea.instance().actionCloseDocument()
+      else if (ActionShortcut.checkKeyCombination(ActionShortcut.ActionType.SELECT_PREVIOUS_BUFFER, event)) EditorArea.instance().actionMoveToPreviousBuffer()
+      else if (ActionShortcut.checkKeyCombination(ActionShortcut.ActionType.SELECT_NEXT_BUFFER, event)) EditorArea.instance().actionMoveToNextBuffer()
+      else if (ActionShortcut.checkKeyCombination(ActionShortcut.ActionType.SELECT_NEXT_BUFFER, event)) EditorArea.instance().actionMoveToNextBuffer()
+      else if (ActionShortcut.checkKeyCombination(ActionShortcut.ActionType.SWITCH_TO_PREVIOUS_DOCUMENT, event)) EditorArea.instance().actionSwitchToPreviousFile()
+      else if (ActionShortcut.checkKeyCombination(ActionShortcut.ActionType.SWITCH_TO_NEXT_DOCUMENT, event)) EditorArea.instance().actionSwitchToNextFile()
+      else if (ActionShortcut.checkKeyCombination(ActionShortcut.ActionType.SELECT_PREVIOUS_TOOL_WINDOW, event)) windowSwitcher.actionSwitchToPreviousToolWindow()
+      else if (ActionShortcut.checkKeyCombination(ActionShortcut.ActionType.SELECT_NEXT_TOOL_WINDOW, event)) windowSwitcher.actionSwitchToNextToolWindow()
+      else if (ActionShortcut.checkKeyCombination(ActionShortcut.ActionType.QUICK_ACCESS, event)) HeaderArea.instance().activateQuickAccess()
+      else if (ActionShortcut.checkKeyCombination(ActionShortcut.ActionType.NEW_FILE, event)) AppController.instance().setFlowState(FlowState.NEW_RESOURCE)
+      else if (ActionShortcut.checkKeyCombination(ActionShortcut.ActionType.OPEN_FILE, event)) AppController.instance().setFlowState(FlowState.OPEN_RESOURCE)
+      else if (ActionShortcut.checkKeyCombination(ActionShortcut.ActionType.OPEN_SETTINGS, event)) AppController.instance().setFlowState(FlowState.SETTINGS)
+      else if (ActionShortcut.checkKeyCombination(ActionShortcut.ActionType.PRODUCTIVE_MODE, event)) AppController.instance().switchProductiveMode(!AppController.instance().isProductiveMode)
+      else event.getCode match {
+        case KeyCode.ESCAPE =>
+          if (flowState != null) flowState match {
+            case FlowState.NEW_RESOURCE => NewResourceView.instance().keyPressed(event)
+            case FlowState.OPEN_RESOURCE => OpenResourceView.instance().keyPressed(event)
+            case FlowState.SETTINGS => SettingsView.instance().keyPressed(event)
+          }
+
+        case _ =>
+      }
     })
 
     this.setOnKeyReleased((event: KeyEvent) => {
-      //      if (ActionShortcut.actions(ActionShortcut.ActionType.SWITCH_TO_NEXT_DOCUMENT).getBinding.head == event.getCode) EditorArea.instance().actionHideWindowSwitcher()
-      //      if (ActionShortcut.actions(ActionShortcut.ActionType.SELECT_NEXT_TOOL_WINDOW).getBinding.head == event.getCode) hideToolWindowSwitcher()
+      if (ActionShortcut.actions(ActionShortcut.ActionType.SWITCH_TO_NEXT_DOCUMENT).getBinding.head == event.getCode) EditorArea.instance().actionHideWindowSwitcher()
+      if (ActionShortcut.actions(ActionShortcut.ActionType.SELECT_NEXT_TOOL_WINDOW).getBinding.head == event.getCode) hideToolWindowSwitcher()
     })
 
-    AppController.instance().bindStateManager()
+    AppController.instance().bindStateManager(this)
   }
 
-  def createCenterPane(): StackPane = {
+  private def hideToolWindowSwitcher(): Unit = {
+    if (windowSwitcher.isVisible) {
+      windowSwitcher.setVisible(false)
+
+      val selectedWindow = windowsList.getSelectionModel.getSelectedItem
+
+      selectedWindow match {
+        case Resources.PROJECT_EXPLORER_WINDOW_NAME =>
+          ProjectExplorer.instance().requestFocus()
+        case Resources.EDITOR_WINDOW_NAME =>
+          EditorArea.instance().requestFocus()
+        case Resources.CONSOLE_WINDOW_NAME =>
+          EditorArea.instance().getEditorConsole.requestFocus()
+        case _ =>
+      }
+    }
+  }
+
+  private def createCenterPane(): StackPane = {
     val centerPane = new StackPane
 
     ProjectView.instance().setPrefWidth(Double.MaxValue)
@@ -173,46 +180,34 @@ class MainContent(stage: Stage) extends BorderPane {
       override def onFirstViewStart(): Unit = {
       }
 
-      override
-
-      def onFirstViewCompleted(): Unit = {
+      override def onFirstViewCompleted(): Unit = {
         HeaderArea.instance().switchView(projectView = true)
       }
 
-      override
-
-      def onFirstTransitionFinished(): Unit = {
+      override def onFirstTransitionFinished(): Unit = {
       }
 
-      override
-
-      def onSecondViewCompleted(): Unit = {
+      override def onSecondViewCompleted(): Unit = {
       }
     }
 
-    viewsTransition = new ViewTransition(newResourceView, ProjectView.instance()) {
+    viewsTransition = new ViewTransition(NewResourceView.instance(), ProjectView.instance()) {
       override def onFirstViewStart(): Unit = {
-        newResourceView.resetState()
+        NewResourceView.instance().resetState()
       }
 
-      override
-
-      def onFirstViewCompleted(): Unit = {
-        newResourceView.setVisible(true)
+      override def onFirstViewCompleted(): Unit = {
+        NewResourceView.instance().setVisible(true)
       }
 
-      override
-
-      def onFirstTransitionFinished(): Unit = {
+      override def onFirstTransitionFinished(): Unit = {
       }
 
-      override
-
-      def onSecondViewCompleted(): Unit = {
+      override def onSecondViewCompleted(): Unit = {
       }
     }
 
-    StructureView.initialize(centerPane)
+    StructureView.initialize(centerPane, scene)
     StructureView.instance().setVisible(false)
 
     centerPane.getChildren.addAll(StructureView.instance(), ProjectView.instance(), windowSwitcher)
@@ -285,12 +280,6 @@ class MainContent(stage: Stage) extends BorderPane {
     transition.runTransition(isProjectView)
   }
 
-  def getFileSelectView: FileSelectView = fileSelectView
-
-  def getNewResourceView: NewResourceView = newResourceView
-
-  def getOpenResourceView: OpenResourceView = openResourceView
-
   def setHeaderAreaVisible(visible: Boolean): Unit = {
     if (visible) this.setTop(HeaderArea.instance())
     else this.setTop(null)
@@ -335,4 +324,19 @@ class MainContent(stage: Stage) extends BorderPane {
 
   //topPane.setMinHeight(1)
   //topPane.setMaxHeight(1)
+}
+
+
+object MainContent {
+  private var _instance: MainContent = _
+
+  def initialize(stage: Stage): MainContent = {
+    if (_instance == null) _instance = new MainContent(stage)
+
+    _instance
+  }
+
+  def instance(): MainContent = {
+    _instance
+  }
 }

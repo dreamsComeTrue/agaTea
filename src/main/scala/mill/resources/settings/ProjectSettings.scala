@@ -3,12 +3,12 @@
 package mill.resources.settings
 
 import javafx.beans.property.SimpleStringProperty
-import javafx.collections.{FXCollections, ObservableList}
+import scalafx.collections.ObservableBuffer
 
 class ProjectSettings() {
   private val mainClass = new SimpleStringProperty
   private val vmArguments = new SimpleStringProperty
-  private var dependencies = FXCollections.observableArrayList[String]
+  private var dependencies = ObservableBuffer[String]()
 
   def getMainClass: String = mainClass.get
 
@@ -26,9 +26,9 @@ class ProjectSettings() {
     this.vmArguments.set(vmArguments)
   }
 
-  def getDependencies: ObservableList[String] = dependencies
+  def getDependencies: ObservableBuffer[String] = dependencies
 
-  def setDependencies(dependencies: ObservableList[String]): Unit = {
+  def setDependencies(dependencies: ObservableBuffer[String]): Unit = {
     this.dependencies = dependencies
   }
 }

@@ -19,13 +19,12 @@ import mill.model.ProjectsRepository
 import mill.resources.Resource
 import mill.ui.controls.TitledPaneContext
 import org.apache.commons.io.FilenameUtils
-
-import scala.collection.JavaConverters._
+import scalafx.collections.ObservableBuffer
 
 class RecentFileEntry() {
   private var projectPane: TitledPaneContext = _
   private val projectScroll = new ScrollPane
-  private val resourcesList = FXCollections.observableArrayList[Resource]
+  private val resourcesList = new ObservableBuffer[Resource]
   private val openedResourcesListView = new ListView[Resource](resourcesList)
   private val tmpText = new Text
   final private val dragSource = new SimpleObjectProperty[ListCell[Resource]]
@@ -33,7 +32,7 @@ class RecentFileEntry() {
 
   init()
 
-  private def init() {
+  private def init(): Unit = {
     val label = new Label(Resources.RECENT_FILES)
     val closeNode = new Label("X")
     closeNode.setTooltip(new Tooltip(Resources.CLOSE_ALL_RESOURCES))
@@ -57,8 +56,10 @@ class RecentFileEntry() {
     projectScroll.setFitToHeight(true)
     projectScroll.setMinHeight(0)
     projectScroll.setMaxHeight(0)
+
     val projectContent = new VBox(openedResourcesListView)
     projectScroll.setContent(projectContent)
+
     projectPane = new TitledPaneContext("", projectScroll)
     projectPane.setContentDisplay(ContentDisplay.GRAPHIC_ONLY)
     projectPane.setGraphic(groupingBox)
@@ -90,7 +91,7 @@ class RecentFileEntry() {
 
         var maxWidth = 0.0
 
-        for (res <- resourcesList.asScala) {
+        for (res <- resourcesList) {
           val name = res.getName
           tmpText.setText(name)
 

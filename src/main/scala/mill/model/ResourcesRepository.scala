@@ -2,13 +2,13 @@
 
 package mill.model
 
-import javafx.collections.{FXCollections, ObservableList}
 import mill.resources.ResourceHandler
+import scalafx.collections.ObservableBuffer
 
 class ResourcesRepository private() {
-  private val resourceHandlers = FXCollections.observableArrayList[ResourceHandler]
+  private val resourceHandlers = new ObservableBuffer[ResourceHandler]()
 
-  def getResourceHandlers: ObservableList[ResourceHandler] = resourceHandlers
+  def getResourceHandlers: ObservableBuffer[ResourceHandler] = resourceHandlers
 }
 
 object ResourcesRepository {

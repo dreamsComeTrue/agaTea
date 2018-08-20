@@ -11,7 +11,7 @@ import java.{lang, util}
 import javafx.beans.NamedArg
 import javafx.beans.property.{ReadOnlyObjectWrapper, SimpleStringProperty}
 import javafx.beans.value.{ChangeListener, ObservableValue}
-import javafx.collections.{FXCollections, ObservableList}
+import javafx.collections.ObservableList
 import javafx.event.{ActionEvent, Event, EventHandler, EventType}
 import javafx.geometry.{Insets, Pos}
 import javafx.scene.Node
@@ -23,11 +23,12 @@ import mill.controller.AppController
 import mill.ui.controls.PercentageTreeTableView
 import mill.ui.views.FileSelectView.FileSelectViewMode.FileSelectViewMode
 import mill.{Resources, Utilities}
+import scalafx.collections.ObservableBuffer
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 
-class FileSelectView() extends AnchorPane {
+class FileSelectView private() extends AnchorPane {
   private var fileSelectedEvent: EventHandler[FileSelectView.FileSelectEvent] = _
   private var fileCanceledEvent: EventHandler[FileSelectView.FileSelectEvent] = _
   private var treeTableView: PercentageTreeTableView[FileTreeItemEntry] = _
@@ -167,7 +168,7 @@ class FileSelectView() extends AnchorPane {
   }
 
   private def prepareHeaderPane: HBox = {
-    val favoritesDirs: ObservableList[MenuItem] = FXCollections.observableArrayList[MenuItem]
+    val favoritesDirs = new ObservableBuffer[MenuItem]()
     val addFavorite: SplitMenuButton = new SplitMenuButton
 
     addFavorite.setGraphic(Utilities.createImageView(Resources.Images.IMAGE_ADD, 10))
@@ -183,7 +184,7 @@ class FileSelectView() extends AnchorPane {
       if (!path.isEmpty) {
         var found: Boolean = false
 
-        for (items <- favoritesDirs.asScala) {
+        for (items <- favoritesDirs) {
           if (items.getText == path) {
             found = true
           }
@@ -191,7 +192,9 @@ class FileSelectView() extends AnchorPane {
 
         if (!found) {
           val it: MenuItem = new MenuItem(path)
-          favoritesDirs.add(it)
+
+          favoritesDirs += it
+
           addFavorite.getItems.addAll(it)
         }
       }
@@ -351,7 +354,9 @@ class FileSelectView() extends AnchorPane {
             if (thisTreeItem != null && thisTreeItem.isExpanded) {
               val children: ObservableList[TreeItem[FileTreeItemEntry]] = thisTreeItem.getChildren
 
-              for (child <- children.asScala) {
+              for (i <- 0 until children.size()) {
+                val child = children.get(i)
+
                 addMatchingTreeItemToSelectedList(child.getValue.getFullPath, child)
               }
             }
@@ -384,14 +389,14 @@ class FileSelectView() extends AnchorPane {
     val rootNode: TreeItem[FileTreeItemEntry] = new TreeItem[FileTreeItemEntry](item, null)
     val rootDirectories: lang.Iterable[Path] = FileSystems.getDefault.getRootDirectories
 
-    for (name <- rootDirectories.asScala) {
+    rootDirectories.forEach(name => {
       val file: File = name.toFile
 
       if (file != null) {
         val node = createNode(name.toAbsolutePath.toString, file, Resources.Images.IMAGE_COMPUTER)
         rootNode.getChildren.add(node)
       }
-    }
+    })
 
     rootNode.setExpanded(true)
 
@@ -497,14 +502,14 @@ class FileSelectView() extends AnchorPane {
     }
   }
 
-  private def buildChildren(treeItem: TreeItem[FileTreeItemEntry]): ObservableList[TreeItem[FileTreeItemEntry]] = {
+  private def buildChildren(treeItem: TreeItem[FileTreeItemEntry]): ObservableBuffer[TreeItem[FileTreeItemEntry]] = {
     val f: File = treeItem.getValue.getFile
+    val children = new ObservableBuffer[TreeItem[FileTreeItemEntry]]()
 
     if (f != null && f.isDirectory) {
       val files: Array[File] = f.listFiles
 
       if (files != null) {
-        val children: ObservableList[TreeItem[FileTreeItemEntry]] = FXCollections.observableArrayList[TreeItem[FileTreeItemEntry]]
         var dirsList = ListBuffer[File]()
         var filesList = ListBuffer[File]()
 
@@ -538,7 +543,7 @@ class FileSelectView() extends AnchorPane {
       }
     }
 
-    FXCollections.emptyObservableList[TreeItem[FileTreeItemEntry]]()
+    children
   }
 
   class FileTreeItemEntry(var fullPath: String, var file: File) {
@@ -581,4 +586,11 @@ object FileSelectView {
     }
   }
 
+  private var _instance: FileSelectView = _
+
+  def instance(): FileSelectView = {
+    if (_instance == null) _instance = new FileSelectView()
+
+    _instance
+  }
 }

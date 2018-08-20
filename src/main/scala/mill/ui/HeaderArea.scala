@@ -246,12 +246,12 @@ class HeaderArea private() extends GridPane {
     saveAllButton.setOnAction((_: ActionEvent) => saveButton.hide())
     saveButton.setContent(saveAllButton)
     saveButton.setOnAction((_: ActionEvent) => {
-      val file = AppController.instance().mainContent.getFileDialog("Save file")
+      val file = MainContent.instance().getFileDialog("Save file")
 
       if (file != null &&
         FxDialogs.showConfirm("Overwrite file?", "Are you sure to overwrite this file?",
           FxDialogs.YES, FxDialogs.NO).equals(FxDialogs.YES)) {
-        AppController.instance().mainContent.filePath = file.getParent
+        MainContent.instance().filePath = file.getParent
 
         val text = AppController.instance().getCurrentTextEditor.getText
         val fileToWrite = new File(file.getCanonicalPath)
@@ -267,6 +267,9 @@ class HeaderArea private() extends GridPane {
     viewButton.setSelected(!projectView)
   }
 
+  def activateQuickAccess(): Unit = {
+    quickAccessBox.requestFocus()
+  }
 }
 
 object HeaderArea {

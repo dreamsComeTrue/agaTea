@@ -32,7 +32,7 @@ class ClassObject(var structureView: StructureView, val title: String, val width
 
   initialize(width, height, title, color, stroke)
 
-  def initialize(width: Double, height: Double, titleText: String, color: Color, stroke: Paint): Unit = {
+  private def initialize(width: Double, height: Double, titleText: String, color: Color, stroke: Paint): Unit = {
     this.stroke = stroke
 
     rect = new Rectangle(width, height)

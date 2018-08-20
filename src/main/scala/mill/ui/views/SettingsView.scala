@@ -7,7 +7,7 @@ import java.{lang, util}
 import javafx.beans.binding.{Bindings, BooleanBinding}
 import javafx.beans.property.{ReadOnlyStringWrapper, SimpleObjectProperty}
 import javafx.beans.value.{ChangeListener, ObservableValue}
-import javafx.collections.{ListChangeListener, ObservableList}
+import javafx.collections.ListChangeListener
 import javafx.css.PseudoClass
 import javafx.event.ActionEvent
 import javafx.geometry.{Insets, Pos}
@@ -23,10 +23,11 @@ import mill.resources.settings.{ApplicationSettings, ProjectSettings}
 import mill.ui.controls.{PercentageTreeTableView, SearchBox}
 import mill.{Resources, Utilities}
 import org.controlsfx.tools.Borders
+import scalafx.collections.ObservableBuffer
 
 import scala.collection.JavaConverters._
 
-class SettingsView private() extends  BorderPane {
+class SettingsView private() extends BorderPane {
   private var centerPane: StackPane = _
   private var editorPane: AnchorPane = _
   private var compilerPane: GridPane = _
@@ -413,10 +414,10 @@ class SettingsView private() extends  BorderPane {
 
         settings.getDependencies.addListener(new ListChangeListener[String] {
           override def onChanged(change: ListChangeListener.Change[_ <: String]): Unit = {
-            val dependencies: ObservableList[String] = settings.getDependencies
+            val dependencies: ObservableBuffer[String] = settings.getDependencies
             dependenciesRoot.getChildren.clear()
 
-            for (dependency <- dependencies.asScala) {
+            for (dependency <- dependencies) {
               dependenciesRoot.getChildren.add(new TreeItem[String](dependency))
             }
           }
@@ -425,10 +426,10 @@ class SettingsView private() extends  BorderPane {
         mainClassLabelField.setText(settings.getMainClass)
         vmParametersField.setText(settings.getVmArguments)
 
-        val dependencies: ObservableList[String] = settings.getDependencies
+        val dependencies: ObservableBuffer[String] = settings.getDependencies
         dependenciesRoot.getChildren.clear()
 
-        for (dependency <- dependencies.asScala) {
+        for (dependency <- dependencies) {
           dependenciesRoot.getChildren.add(new TreeItem[String](dependency))
         }
       }

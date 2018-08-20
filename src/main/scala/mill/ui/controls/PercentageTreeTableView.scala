@@ -8,7 +8,6 @@ import javafx.collections.ListChangeListener
 import javafx.scene.control.{TreeTableColumn, TreeTableView}
 import javafx.scene.layout.{ColumnConstraints, GridPane, StackPane}
 
-import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 
 object PercentageTreeTableView {
@@ -35,8 +34,8 @@ class PercentageTreeTableView[s] @SuppressWarnings(Array("rawtypes"))() extends 
       val arr1 = ListBuffer[ColumnConstraints]()
       val arr2 = ListBuffer[StackPane]()
 
-      var i = 0
-      for (column <- PercentageTreeTableView.this.table.getColumns.asScala) {
+      for (i <- 0 until PercentageTreeTableView.this.table.getColumns.size()) {
+        val column = PercentageTreeTableView.this.table.getColumns.get(i)
         val col: PercentageTreeTableView.PercentageTableColumn[_, _] = column.asInstanceOf[PercentageTreeTableView.PercentageTableColumn[_, _]]
         val constraints = new ColumnConstraints
         constraints.setPercentWidth(col.getPercentWidth.get)
@@ -51,7 +50,6 @@ class PercentageTreeTableView[s] @SuppressWarnings(Array("rawtypes"))() extends 
 
         arr1 += constraints
         arr2 += sp
-        i += 1
       }
 
       grid.getColumnConstraints.addAll(arr1: _*)

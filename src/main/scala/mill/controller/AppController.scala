@@ -20,7 +20,7 @@ import mill.ui.{EditorArea, FooterArea, MainContent, TextEditor}
 
 import scala.collection.mutable.ListBuffer
 
-class AppController private(val mainContent: MainContent) {
+class AppController private() {
   private var scheduler: Timeline = _
   private var stageInitializers = new ListBuffer[FXStageInitializer]()
 
@@ -58,7 +58,7 @@ class AppController private(val mainContent: MainContent) {
   }
 
   def assignCurrentTextEditor(textEditorOpt: Option[TextEditor]): Unit = {
-    mainContent.assignCurrentTextEditor(textEditorOpt)
+    MainContent.instance().assignCurrentTextEditor(textEditorOpt)
   }
 
   def getConsoleWindowVisible: Boolean = EditorArea.instance().isConsoleWindowVisible
@@ -79,8 +79,8 @@ class AppController private(val mainContent: MainContent) {
     FooterArea.instance().setInfoText(text)
   }
 
-  def bindStateManager(): Unit = {
-    StateManager.instance().bindStates()
+  def bindStateManager(content: MainContent): Unit = {
+    StateManager.instance().bindStates(content)
   }
 
   def getProjectExplorerVisible: Boolean = ProjectView.instance().isProjectExplorerVisible
@@ -95,20 +95,20 @@ class AppController private(val mainContent: MainContent) {
     setProjectExplorerVisible(!showMaximized)
     setConsoleWindowVisible(!showMaximized)
 
-    mainContent.setHeaderAreaVisible(!showMaximized)
+    MainContent.instance().setHeaderAreaVisible(!showMaximized)
   }
 
   def isProductiveMode: Boolean = ApplicationSettings.instance().getProductiveMode
 
   def closeResourceInEditor(path: String): Unit = EditorArea.instance().closeResourceInEditor(path)
 
-  def showContentBar(imageName: String, content: Pane, initialFocus: Node): Unit = mainContent.showContentBar(imageName, content, initialFocus)
+  def showContentBar(imageName: String, content: Pane, initialFocus: Node): Unit = MainContent.instance().showContentBar(imageName, content, initialFocus)
 
-  def setContentBarHeight(height: Int): Unit = mainContent.setContentBarHeight(height)
+  def setContentBarHeight(height: Int): Unit = MainContent.instance().setContentBarHeight(height)
 
-  def hideContentBar(): Unit = mainContent.hideContentBar()
+  def hideContentBar(): Unit = MainContent.instance().hideContentBar()
 
-  def showNotification(text: String): Unit = mainContent.showNotification(text)
+  def showNotification(text: String): Unit = MainContent.instance().showNotification(text)
 
   def openResourceInEditor(title: String, filePath: String, boundResource: Resource): Unit = EditorArea.instance().openResourceInEditor(title, filePath, boundResource)
 
@@ -132,11 +132,9 @@ class AppController private(val mainContent: MainContent) {
 object AppController {
   private var _instance: AppController = _
 
-  def initialize(mainContent: MainContent): Unit = {
-    if (_instance == null) _instance = new AppController(mainContent)
-  }
-
   def instance(): AppController = {
+    if (_instance == null) _instance = new AppController()
+
     _instance
   }
 }

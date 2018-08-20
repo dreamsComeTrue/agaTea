@@ -1,14 +1,13 @@
 package mill.ui.editor
 
-import javafx.collections.ObservableList
 import javafx.event.ActionEvent
 import javafx.geometry.Insets
 import javafx.scene.Node
 import javafx.scene.control.{Button, SplitPane, ToggleButton, Tooltip}
 import javafx.scene.input.{MouseButton, MouseEvent}
 import javafx.scene.layout.{BorderPane, Pane, StackPane, VBox}
-import mill.{Resources, Utilities}
 import mill.controller.{AppController, FXStageInitializer, GlobalState}
+import mill.{Resources, Utilities}
 import scalafx.beans.property.ObjectProperty
 import scalafx.collections.ObservableBuffer
 import scalafx.collections.ObservableBuffer.{Add, Change, Remove}
@@ -114,6 +113,8 @@ class EditorWindow() extends BorderPane with FXStageInitializer {
 
             bufferHeaders.remove(findBufferHeader(buffer))
           }
+
+        case _ =>
       }
     }
     )
@@ -238,6 +239,8 @@ class EditorWindow() extends BorderPane with FXStageInitializer {
           for (buffer <- removed) {
             topContent.getChildren.remove(buffer.getContent)
           }
+
+        case _ =>
       }
 
       AppController.instance().addFXStageInitializer(EditorWindow.this)
@@ -371,7 +374,7 @@ class EditorWindow() extends BorderPane with FXStageInitializer {
     }
   }
 
-  def getBuffers: ObservableList[EditorBuffer] = {
+  def getBuffers: ObservableBuffer[EditorBuffer] = {
     buffers
   }
 

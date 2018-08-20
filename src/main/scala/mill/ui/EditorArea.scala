@@ -6,7 +6,6 @@ import java.io.File
 
 import com.sun.javafx.scene.control.skin.SplitPaneSkin
 import javafx.beans.value.{ChangeListener, ObservableValue}
-import javafx.collections.{FXCollections, ListChangeListener}
 import javafx.event.ActionEvent
 import javafx.geometry.Orientation
 import javafx.scene.control.{Label, SplitPane, Tab, TabPane}
@@ -14,19 +13,21 @@ import javafx.scene.image.{Image, ImageView}
 import javafx.scene.input.{MouseButton, MouseEvent}
 import javafx.scene.layout.{BorderPane, StackPane}
 import mill.controller.{AppController, FXStageInitializer, GlobalState}
-import mill.resources.Resource
+import mill.resources.{Resource, ResourceFactory}
 import mill.resources.settings.ApplicationSettings
 import mill.ui.controls.SplitPaneDividerSlider
 import mill.ui.editor.{EditorBuffer, EditorWindow, EditorWindowContainer}
 import org.apache.commons.io.FilenameUtils
 import org.apache.commons.lang3.tuple.Pair
 import scalafx.beans.property.ObjectProperty
+import scalafx.collections.ObservableBuffer
+import scalafx.collections.ObservableBuffer.Change
 
 import scala.io.Source
 
 class EditorArea private() extends FXStageInitializer {
   private val windowContainer = new EditorWindowContainer
-  private val editorWindows = FXCollections.observableArrayList[EditorWindow]
+  private val editorWindows = new ObservableBuffer[EditorWindow]()
   private val activeEditorWindow = new ObjectProperty[EditorWindow]()
 
   private val tabPane = createTabPane()
@@ -165,6 +166,8 @@ class EditorArea private() extends FXStageInitializer {
     tabPane
   }
 
+  def getEditorConsole = editorConsole
+
   def isConsoleWindowVisible: Boolean = consoleWindowVisible
 
   def setConsoleWindowVisible(visible: Boolean): Unit = {
@@ -193,7 +196,7 @@ class EditorArea private() extends FXStageInitializer {
 
   def closeResourceInEditor(path: String): Unit = {
     for (i <- 0 until editorWindows.size()) {
-      val window = editorWindows.get(i)
+      val window = editorWindows(i)
 
       for (i <- 0 until window.getBuffers.size()) {
         val buffer = window.getBuffers.get(i)
@@ -207,12 +210,8 @@ class EditorArea private() extends FXStageInitializer {
   }
 
   def openResourceInEditor(title: String, path: String, resource: Resource): Unit = { //	Try to find already opened file
-    for (i <- 0 until editorWindows.size()) {
-      val window = editorWindows.get(i)
-
-      for (i <- 0 until window.getBuffers.size()) {
-        val buffer = window.getBuffers.get(i)
-
+    for (window <- editorWindows) {
+      for (buffer <- window.getBuffers) {
         if (buffer.getPath == path) {
           return
         }
@@ -232,25 +231,22 @@ class EditorArea private() extends FXStageInitializer {
   }
 
   private def addEditorWindow(window: EditorWindow): Unit = {
-    editorWindows.add(window)
+    editorWindows += window
+
     activeEditorWindow() = window
     windowContainer.addWindow(window)
 
     //	Attach listener for window removal, when no buffer is active
     val buffers = window.getBuffers
 
-    buffers.addListener(new ListChangeListener[EditorBuffer] {
-      override def onChanged(c: ListChangeListener.Change[_ <: EditorBuffer]): Unit = {
-        if (buffers.size == 0) removeEditorWindow(window)
-      }
-    })
+    buffers.onChange((_: ObservableBuffer[EditorBuffer], c: Seq[Change[EditorBuffer]]) => if (buffers.isEmpty) removeEditorWindow(window))
   }
 
   def removeEditorWindow(window: EditorWindow): Unit = {
     windowContainer.removeWindow(window)
     editorWindows.remove(window)
 
-    if (editorWindows.size > 0) activeEditorWindow() = editorWindows.get(editorWindows.size - 1)
+    if (editorWindows.nonEmpty) activeEditorWindow() = editorWindows.get(editorWindows.size - 1)
     else activeEditorWindow() = null
   }
 
@@ -305,11 +301,7 @@ class EditorArea private() extends FXStageInitializer {
 
     //	Attach listener for window removal, when no buffer is active
     val buffers = window.getBuffers
-    buffers.addListener(new ListChangeListener[EditorBuffer] {
-      override def onChanged(c: ListChangeListener.Change[_ <: EditorBuffer]): Unit = {
-        if (buffers.size == 0) removeEditorWindow(window)
-      }
-    })
+    buffers.onChange((_: ObservableBuffer[EditorBuffer], c: Seq[Change[EditorBuffer]]) => if (buffers.isEmpty) removeEditorWindow(window))
 
     Pair.of(window, oldWindow)
   }
@@ -325,14 +317,16 @@ class EditorArea private() extends FXStageInitializer {
 
   def getActiveEditorWindow: EditorWindow = activeEditorWindow()
 
-  def getActiveEditorBuffer: EditorBuffer = if (activeEditorWindow() == null) null
-  else activeEditorWindow().getActiveBuffer
+  def getActiveEditorBuffer: EditorBuffer = {
+    if (activeEditorWindow() == null) null
+    else activeEditorWindow().getActiveBuffer
+  }
 
   def actionMoveToPreviousBuffer(): Unit = {
     val buffers = getActiveEditorWindow.getBuffers
     var nextIndex = -1
 
-    for (i <- 0 until buffers.size) {
+    for (i <- buffers.indices) {
       if (nextIndex == -1 && buffers.get(i) != getActiveEditorBuffer) {
         nextIndex = i - 1
       }
@@ -346,7 +340,7 @@ class EditorArea private() extends FXStageInitializer {
     val buffers = getActiveEditorWindow.getBuffers
     var nextIndex = -1
 
-    for (i <- 0 until buffers.size) {
+    for (i <- buffers.indices) {
       if (nextIndex == -1 && buffers.get(i) != getActiveEditorBuffer) {
         nextIndex = i + 1
       }
@@ -356,6 +350,75 @@ class EditorArea private() extends FXStageInitializer {
     getActiveEditorWindow.setActiveBuffer(buffers.get(nextIndex))
   }
 
+  def actionCloseDocument(): Unit = {
+    if (getActiveEditorBuffer != null) closeResourceInEditor(getActiveEditorBuffer.getPath)
+  }
+
+  def actionSwitchToPreviousFile(): Unit = {
+//    val openedFilesCount = openedFilesList.getItems.size
+//    val recentFilesCount = recentFilesList.getItems.size
+//
+//    if ((openedFilesCount > 0 || recentFilesCount > 0) && !windowSwitcher.isVisible) {
+//      currFileSwitcherIndex = -1
+//      windowSwitcher.setVisible(true)
+//    }
+//    if (windowSwitcher.isVisible) {
+//      currFileSwitcherIndex -= 1
+//      if (currFileSwitcherIndex < 0) currFileSwitcherIndex = openedFilesCount + recentFilesCount - 1
+//      if (currFileSwitcherIndex < openedFilesCount) {
+//        openedFilesList.requestFocus()
+//        openedFilesList.getSelectionModel.select(currFileSwitcherIndex)
+//        openedFilesList.getFocusModel.focus(currFileSwitcherIndex)
+//      }
+//      else {
+//        recentFilesList.requestFocus()
+//        recentFilesList.getSelectionModel.select(currFileSwitcherIndex - openedFilesCount)
+//        recentFilesList.getFocusModel.focus(currFileSwitcherIndex - openedFilesCount)
+//      }
+//    }
+  }
+
+  def actionSwitchToNextFile(): Unit = {
+//    val openedFilesCount = openedFilesList.getItems.size
+//    val recentFilesCount = recentFilesList.getItems.size
+//    if ((openedFilesCount > 0 || recentFilesCount > 0) && !windowSwitcher.isVisible) {
+//      currFileSwitcherIndex = -1
+//      windowSwitcher.setVisible(true)
+//    }
+//    if (windowSwitcher.isVisible) {
+//      currFileSwitcherIndex += 1
+//      if (currFileSwitcherIndex >= openedFilesCount + recentFilesCount) currFileSwitcherIndex = 0
+//      if (currFileSwitcherIndex < openedFilesCount) {
+//        openedFilesList.requestFocus()
+//        openedFilesList.getSelectionModel.select(currFileSwitcherIndex)
+//        openedFilesList.getFocusModel.focus(currFileSwitcherIndex)
+//      }
+//      else {
+//        recentFilesList.requestFocus()
+//        recentFilesList.getSelectionModel.select(currFileSwitcherIndex - openedFilesCount)
+//        recentFilesList.getFocusModel.focus(currFileSwitcherIndex - openedFilesCount)
+//      }
+//    }
+  }
+
+  def actionHideWindowSwitcher(): Unit = {
+//    if (windowSwitcher.isVisible) {
+//      windowSwitcher.setVisible(false)
+//
+//      val openedFilesCount = openedFilesList.getItems.size
+//      var selectedItem = ""
+//
+//      if (currFileSwitcherIndex < openedFilesCount) selectedItem = openedFilesList.getSelectionModel.getSelectedItem
+//      else selectedItem = recentFilesList.getSelectionModel.getSelectedItem
+//
+//      ResourceFactory.handleFileOpen(selectedItem)
+//
+//      openedFilesList.getItems.remove(selectedItem)
+//      openedFilesList.getItems.add(0, selectedItem)
+//    }
+  }
+
+
   /**
     * Focuses on buffer with given title
     *
@@ -364,12 +427,8 @@ class EditorArea private() extends FXStageInitializer {
   def focusEditorBuffer(filePath: String): Boolean = {
     val normalFilePath = FilenameUtils.normalize(filePath)
 
-    for (i <- 0 until editorWindows.size()) {
-      val window = editorWindows.get(i)
-
-      for (i <- 0 until window.getBuffers.size()) {
-        val buffer = window.getBuffers.get(i)
-
+    for (window <- editorWindows) {
+      for (buffer <- window.getBuffers) {
         if (buffer.getPath == normalFilePath) {
           setActiveEditorWindow(window)
           window.setActiveBuffer(buffer)
@@ -381,6 +440,13 @@ class EditorArea private() extends FXStageInitializer {
     }
 
     false
+  }
+
+  /**
+    * Moves focus to active editor buffer
+    */
+  def requestFocus(): Unit = {
+    if (getActiveEditorBuffer != null) getActiveEditorBuffer.requestFocus()
   }
 }
 

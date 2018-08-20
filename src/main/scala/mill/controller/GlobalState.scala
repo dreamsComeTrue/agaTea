@@ -2,8 +2,8 @@
 
 package mill.controller
 
-import javafx.collections.{FXCollections, ObservableList}
 import org.apache.commons.io.FilenameUtils
+import scalafx.collections.ObservableBuffer
 
 class GlobalState private() {
   def isFileOpened(filePath: String): Boolean = {
@@ -33,9 +33,9 @@ class GlobalState private() {
 }
 
 object GlobalState {
-  private val openedFiles: ObservableList[String] = FXCollections.observableArrayList[String]
-  private val recentlyOpenedFiles: ObservableList[String] = FXCollections.observableArrayList[String]
-  private val recentFiles: ObservableList[String] = FXCollections.observableArrayList[String]
+  private val openedFiles = new ObservableBuffer[String]()
+  private val recentlyOpenedFiles = new ObservableBuffer[String]()
+  private val recentFiles = new ObservableBuffer[String]()
 
   private var _instance: GlobalState = _
 
@@ -45,9 +45,9 @@ object GlobalState {
     _instance
   }
 
-  def getOpenedFiles: ObservableList[String] = openedFiles
+  def getOpenedFiles: ObservableBuffer[String] = openedFiles
 
-  def getRecentlyOpenedFiles: ObservableList[String] = recentlyOpenedFiles
+  def getRecentlyOpenedFiles: ObservableBuffer[String] = recentlyOpenedFiles
 
   def addRecentFile(filePath: String): Unit = {
     val normalFilePath = FilenameUtils.normalize(filePath)
@@ -55,5 +55,5 @@ object GlobalState {
     if (!recentFiles.contains(normalFilePath)) recentFiles.add(normalFilePath)
   }
 
-  def getRecentFiles: ObservableList[String] = recentFiles
+  def getRecentFiles: ObservableBuffer[String] = recentFiles
 }

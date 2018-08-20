@@ -2,7 +2,6 @@
 
 package mill.ui.views
 
-import java.io.File
 import java.lang.reflect.{InvocationTargetException, Method}
 
 import javafx.beans.value.{ChangeListener, ObservableValue}
@@ -16,12 +15,11 @@ import javafx.scene.layout.{AnchorPane, BorderPane, HBox, VBox}
 import javafx.util.Callback
 import mill.controller.{AppController, GlobalState}
 import mill.resources.ResourceHandler
+import mill.ui.MainContent
 import mill.{Resources, Utilities}
 import org.apache.commons.collections4.keyvalue.DefaultKeyValue
 
-import scala.collection.JavaConverters._
-
-class NewResourceView extends BorderPane {
+class NewResourceView private() extends BorderPane {
   private val pagination = new Pagination(2)
   private val tree = new TreeView[DefaultKeyValue[String, ResourceEntry]]()
   private var selectedEntry: DefaultKeyValue[String, ResourceEntry] = _
@@ -30,7 +28,7 @@ class NewResourceView extends BorderPane {
 
   init()
 
-  def init(): Unit = {
+  private def init(): Unit = {
     val headerLabel = new Label(Resources.CREATE_NEW_RESOURCE)
     val topBar = new VBox(headerLabel)
     topBar.setAlignment(Pos.CENTER)
@@ -77,9 +75,7 @@ class NewResourceView extends BorderPane {
   }
 
   private def getPage2: FileSelectView = {
-    val fileSelect = AppController.instance().mainContent.getFileSelectView
-
-    fileSelect.setFileSelectedEvent((event: FileSelectView.FileSelectEvent) => {
+    FileSelectView.instance().setFileSelectedEvent((event: FileSelectView.FileSelectEvent) => {
       getSelectedEntry.getValue.getResourceHandler.handleCreate(event.getPath, true)
 
       AppController.instance().switchToLastState()
@@ -90,9 +86,9 @@ class NewResourceView extends BorderPane {
     })
 
     val defaultFileName = getSelectedEntry.getValue.getResourceHandler.getDefaultResourceName
-    fileSelect.initialize(defaultFileName, FileSelectView.FileSelectViewMode.OPEN_FILE)
+    FileSelectView.instance().initialize(defaultFileName, FileSelectView.FileSelectViewMode.OPEN_FILE)
 
-    fileSelect
+    FileSelectView.instance()
   }
 
   private def initializePage1: AnchorPane = {
@@ -132,7 +128,9 @@ class NewResourceView extends BorderPane {
             var group: TreeItem[DefaultKeyValue[String, ResourceEntry]] = null
             var foundGroup: Boolean = false
 
-            for (item: TreeItem[DefaultKeyValue[String, ResourceEntry]] <- rootItem.getChildren.asScala) {
+            for (i <- 0 until rootItem.getChildren.size()) {
+              val item: TreeItem[DefaultKeyValue[String, ResourceEntry]] = rootItem.getChildren.get(i)
+
               if (item.getValue.getKey == groupName) {
                 group = item
                 foundGroup = true
@@ -276,7 +274,7 @@ class NewResourceView extends BorderPane {
 
     init()
 
-    def init() {
+    def init(): Unit = {
       val image = new Image(Utilities.getResource(imagePath))
       imageView = new ImageView(image)
 
@@ -292,4 +290,14 @@ class NewResourceView extends BorderPane {
     def getResourceHandler: ResourceHandler = resourceHandler
   }
 
+}
+
+object NewResourceView {
+  private var _instance: NewResourceView = _
+
+  def instance(): NewResourceView = {
+    if (_instance == null) _instance = new NewResourceView()
+
+    _instance
+  }
 }

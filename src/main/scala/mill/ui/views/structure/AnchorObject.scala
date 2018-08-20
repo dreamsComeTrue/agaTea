@@ -9,13 +9,18 @@ import javafx.scene.paint.Color
 import javafx.scene.shape.{Circle, StrokeType}
 
 class AnchorObject(val color: Color, val x: DoubleProperty, val y: DoubleProperty, val size: Double) extends Circle(x.get, y.get, size) {
-  setFill(color.deriveColor(1, 1, 1, 0.5))
-  setStroke(color)
-  setStrokeWidth(2)
-  setStrokeType(StrokeType.OUTSIDE)
-  x.bind(centerXProperty)
-  y.bind(centerYProperty)
-  enableDrag()
+  init ()
+
+
+  private def init (): Unit = {
+    setFill(color.deriveColor(1, 1, 1, 0.5))
+    setStroke(color)
+    setStrokeWidth(2)
+    setStrokeType(StrokeType.OUTSIDE)
+    x.bind(centerXProperty)
+    y.bind(centerYProperty)
+    enableDrag()
+  }
 
   // make a node movable by dragging it around with the mouse.
   private def enableDrag(): Unit = {

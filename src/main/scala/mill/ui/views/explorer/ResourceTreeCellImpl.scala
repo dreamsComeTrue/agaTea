@@ -15,8 +15,6 @@ import mill.resources.files.{ClassFile, PackageFile}
 import mill.{Resources, Utilities}
 import org.apache.commons.io.FilenameUtils
 
-import scala.collection.JavaConverters._
-
 final class ResourceTreeCellImpl(val projectEntry: ProjectEntry) extends TreeCell[Resource] {
   final private val highlighted = PseudoClass.getPseudoClass("highlighted")
   private var parentTree: TreeView[Resource] = _
@@ -33,7 +31,7 @@ final class ResourceTreeCellImpl(val projectEntry: ProjectEntry) extends TreeCel
 
   init()
 
-  private def init() {
+  private def init(): Unit = {
     highlightCell.addListener(listener)
 
     this.parentTree = projectEntry.getTree
@@ -76,14 +74,12 @@ final class ResourceTreeCellImpl(val projectEntry: ProjectEntry) extends TreeCel
       dragEvent.consume()
     })
 
-    this.setOnDragExited((event: DragEvent) => {
-      def foo(event: DragEvent) = if (!ResourceTreeCellImpl.this.getStyleClass.contains("drag-node-exited")) {
+    this.setOnDragExited((_: DragEvent) => {
+      if (!ResourceTreeCellImpl.this.getStyleClass.contains("drag-node-exited"))
         if (ResourceTreeCellImpl.this.getStyleClass.contains("drag-node-entered")) ResourceTreeCellImpl.this.getStyleClass.remove("drag-node-entered")
-        ResourceTreeCellImpl.this.getStyleClass.add("drag-node-exited")
-      }
-
-      foo(event)
+      ResourceTreeCellImpl.this.getStyleClass.add("drag-node-exited")
     })
+
     this.setOnDragOver((dragEvent: DragEvent) => {
       if (projectEntry.getDraggedResource != null) if (!projectEntry.getDraggedResource.isInstanceOf[PackageFile] && !getItem.isInstanceOf[PackageFile]) {
         if (!ResourceTreeCellImpl.this.getStyleClass.contains("drag-node-entered")) {
@@ -95,6 +91,7 @@ final class ResourceTreeCellImpl(val projectEntry: ProjectEntry) extends TreeCel
           dragEvent.acceptTransferModes(TransferMode.MOVE)
         }
       }
+
       dragEvent.consume()
     })
 
@@ -172,8 +169,8 @@ object ResourceTreeCellImpl {
 
     if (currentNode.getValue != null && currentNode.getValue == valueToSearch) result = currentNode
     else if (!currentNode.isLeaf) {
-      for (child <- currentNode.getChildren.asScala) {
-        result = search(child, valueToSearch)
+      for (i <- 0 to currentNode.getChildren.size()) {
+        result = search(currentNode.getChildren.get(i), valueToSearch)
 
         if (result != null) {
           return result

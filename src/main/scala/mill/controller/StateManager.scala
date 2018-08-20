@@ -5,8 +5,9 @@ package mill.controller
 import javafx.scene.Node
 import mill.controller.FlowState.FlowState
 import mill.controller.states._
+import mill.ui.MainContent
 import mill.ui.views.FileSelectView.FileSelectViewMode
-import mill.ui.views.{ProjectView, SettingsView, StructureView}
+import mill.ui.views._
 
 class StateManager {
   private var applicationProjectState: ApplicationProjectState = _
@@ -95,9 +96,9 @@ class StateManager {
   private def switchToOpenResourceState(realLastState: ApplicationState): Boolean = {
     var previousContent: Node = null
 
-    AppController.instance().mainContent.getOpenResourceView.refreshFileSelectView()
+    OpenResourceView.instance().refreshFileSelectView()
 
-    val fileSelectView = AppController.instance().mainContent.getFileSelectView
+    val fileSelectView = FileSelectView.instance()
     fileSelectView.initialize("", FileSelectViewMode.OPEN_FILE)
 
     if (actualState == applicationProjectState) {
@@ -143,7 +144,7 @@ class StateManager {
       return true
     }
 
-    openResourceState.setOnFirstTransitionFinished((_: Void) => AppController.instance().mainContent.getFileSelectView.afterCreated())
+    openResourceState.setOnFirstTransitionFinished((_: Void) => FileSelectView.instance().afterCreated())
     openResourceState.process(previousContent)
     actualState = openResourceState
 
@@ -180,7 +181,7 @@ class StateManager {
       return true
     }
 
-    newResourceState.setOnFirstTransitionFinished((_: Void) => AppController.instance().mainContent.getNewResourceView.afterCreated())
+    newResourceState.setOnFirstTransitionFinished((_: Void) => NewResourceView.instance().afterCreated())
     newResourceState.process(previousContent)
     newResourceState.setOnFirstTransitionFinished(null)
 
@@ -245,14 +246,12 @@ class StateManager {
     setActualState(lastFlowState)
   }
 
-  def bindStates(): Unit = {
-    val content = AppController.instance().mainContent
-
+  def bindStates(content: MainContent): Unit = {
     applicationProjectState.setContent(ProjectView.instance())
     applicationStructureState.setContent(StructureView.instance())
     settingsState.setContent(SettingsView.instance())
-    newResourceState.setContent(content.getNewResourceView)
-    openResourceState.setContent(content.getOpenResourceView)
+    newResourceState.setContent(NewResourceView.instance())
+    openResourceState.setContent(OpenResourceView.instance())
   }
 
   private def switchBackToStructureState(state: ApplicationState): Node = {

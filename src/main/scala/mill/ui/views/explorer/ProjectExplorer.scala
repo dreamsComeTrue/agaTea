@@ -2,7 +2,7 @@
 
 package mill.ui.views.explorer
 
-import javafx.collections.{FXCollections, MapChangeListener, ObservableList, ObservableMap}
+import javafx.collections.{MapChangeListener, ObservableMap}
 import javafx.event.ActionEvent
 import javafx.geometry.Insets
 import javafx.scene.Node
@@ -18,8 +18,8 @@ import mill.ui.views.SettingsView
 import mill.{Resources, Utilities}
 import org.apache.commons.io.FilenameUtils
 import org.controlsfx.tools.Borders
+import scalafx.collections.ObservableBuffer
 
-import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 
 
@@ -29,12 +29,12 @@ class ProjectExplorer private() extends BorderPane {
   private var recentFileEntry: RecentFileEntry = _
   private val projectEntries = ListBuffer[ProjectEntry]()
   private var currentProjectEntry: ProjectEntry = _
-  private var selectedTreeItems: ObservableList[TreeItem[Resource]] = FXCollections.observableArrayList[TreeItem[Resource]]
-  private var selectedItems: ObservableList[Resource] = FXCollections.observableArrayList[Resource]
+  private var selectedTreeItems = new ObservableBuffer[TreeItem[Resource]]()
+  private var selectedItems = new ObservableBuffer[Resource]()
 
   init()
 
-  private def init() {
+  private def init(): Unit = {
     val buttonsRow: Node = createButtonsRow
 
     this.getStyleClass.add("project-explorer-background")
@@ -68,10 +68,10 @@ class ProjectExplorer private() extends BorderPane {
     openFiles.addListener(new MapChangeListener[String, Resource] {
       override def onChanged(change: MapChangeListener.Change[_ <: String, _ <: Resource]): Unit = {
         if (openFiles.size > 0) {
-          val children: ObservableList[Node] = stackedTitledPanes.getChildren
+          val children = stackedTitledPanes.getChildren
 
           if (children.size == 0) stackedTitledPanes.getChildren.add(0, projectPane)
-          else if (children.get(0) ne projectPane) stackedTitledPanes.getChildren.add(0, projectPane)
+          else if (children.get(0) != projectPane) stackedTitledPanes.getChildren.add(0, projectPane)
         }
         else stackedTitledPanes.getChildren.remove(projectPane)
       }
@@ -189,7 +189,9 @@ class ProjectExplorer private() extends BorderPane {
     val packageFile: PackageFile = new PackageFile(project, packageName, packageName, false)
 
     if (selectedTreeItems.size > 0) {
-      for (selectedTreeItem: TreeItem[Resource] <- selectedTreeItems.asScala) {
+      for (i <- 0 until selectedTreeItems.size()) {
+        val selectedTreeItem: TreeItem[Resource] = selectedTreeItems.get(i)
+
         selectedTreeItem.getValue match {
           case selectedPackage: PackageFile =>
 
@@ -243,23 +245,23 @@ class ProjectExplorer private() extends BorderPane {
     */
   def closeAllResourcesInEditor(project: Project): Unit = {
     projectEntries.filter((entry: ProjectEntry) => entry.getProject eq project).foreach((entry: ProjectEntry) => {
-      for (packageFile: PackageFile <- project.getPackageFiles.asScala) {
-        for (classFile: ClassFile <- packageFile.getClasses.asScala) {
+      for (packageFile: PackageFile <- project.getPackageFiles) {
+        for (classFile: ClassFile <- packageFile.getClasses) {
           closeResourceInEditor(classFile.getFullPath)
         }
       }
     })
   }
 
-  def getSelectedTreeItems: ObservableList[TreeItem[Resource]] = selectedTreeItems
+  def getSelectedTreeItems: ObservableBuffer[TreeItem[Resource]] = selectedTreeItems
 
-  def setSelectedTreeItems(selectedTreeItems: ObservableList[TreeItem[Resource]]): Unit = {
+  def setSelectedTreeItems(selectedTreeItems: ObservableBuffer[TreeItem[Resource]]): Unit = {
     this.selectedTreeItems = selectedTreeItems
   }
 
-  def getSelectedItems: ObservableList[Resource] = selectedItems
+  def getSelectedItems: ObservableBuffer[Resource] = selectedItems
 
-  def setSelectedItems(selectedItems: ObservableList[Resource]): Unit = {
+  def setSelectedItems(selectedItems: ObservableBuffer[Resource]): Unit = {
     this.selectedItems = selectedItems
   }
 

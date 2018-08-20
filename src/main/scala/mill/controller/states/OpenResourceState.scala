@@ -3,7 +3,8 @@
 package mill.controller.states
 
 import javafx.scene.Node
-import mill.controller.{AppController, ApplicationState}
+import mill.controller.ApplicationState
+import mill.ui.MainContent
 
 class OpenResourceState extends ApplicationState {
   private var enabled = false
@@ -12,7 +13,7 @@ class OpenResourceState extends ApplicationState {
   override def process(lastStateContent: Node): Unit = {
     if (!forceEnabled) enabled = !enabled
 
-    AppController.instance().mainContent.runStatesTransition(this, this.getContent, lastStateContent, enabled)
+    MainContent.instance().runStatesTransition(this, this.getContent, lastStateContent, enabled)
 
     forceEnabled = false
   }

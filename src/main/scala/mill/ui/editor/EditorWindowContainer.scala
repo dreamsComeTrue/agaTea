@@ -4,7 +4,6 @@ import javafx.geometry.Orientation
 import javafx.scene.control.SplitPane
 
 import scala.collection.mutable
-import scala.collection.mutable.Map
 
 /**
   * Created by Dominik 'squall' Jasiński on 2018-08-17.

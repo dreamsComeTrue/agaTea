@@ -14,7 +14,7 @@ object MillApp {
 
 class MillApp extends Application {
   override def start(primaryStage: Stage) {
-    val mainContent = new MainContent(primaryStage)
+    val mainContent = MainContent.initialize(primaryStage)
 
     primaryStage.setTitle("mill - simple developer editor")
     primaryStage.setScene(mainContent.scene)
