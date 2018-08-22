@@ -3,13 +3,11 @@
 package mill.ui
 
 import java.io.{BufferedWriter, File, FileWriter}
-import java.lang
 
 import javafx.beans.binding.Bindings
-import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.event.ActionEvent
 import javafx.geometry.{HPos, Insets, Pos}
-import javafx.scene.control.{ToggleButton, Tooltip}
+import javafx.scene.control.{Button, ToggleButton, Tooltip}
 import javafx.scene.image.{Image, ImageView}
 import javafx.scene.input.KeyEvent
 import javafx.scene.layout._
@@ -18,51 +16,52 @@ import mill.ui.controls.{SearchBox, SlideButton}
 import mill.{FxDialogs, Resources, Utilities}
 
 class HeaderArea private() extends GridPane {
-  private val buttonSize = 25
-  private val buttonPadding = 6
+  private final val buttonSize = 25
+  private final val buttonPadding = 6
 
   private var viewButton: ToggleButton = _
-  private var recentFilesTreeView = null
-  private var confirmBar = null
 
-  private var generalToolbar: HBox = _
-  private var buildToolbar: HBox = _
-  private var miscToolbar: HBox = _
-  private var quickAccessBox: SearchBox = _
+  private val quickAccessBox = createQuickAccessBox()
+  private val generalToolbar = createGeneralToolbar()
+  private val buildToolbar = createBuildToolbar()
+  private val miscToolbar = createMiscToolbar()
 
   init()
 
   private def init(): Unit = {
     this.setMinHeight(45)
 
-    createGeneralToolbar()
-    createBuildToolbar()
-    createMiscToolbar()
     layoutToolbars()
     assignColumnConstraints()
   }
 
-  private def createGeneralToolbar(): Unit = {
+  private def createGeneralToolbar(): HBox = {
     val newEditorButton = createNewEditorButton
     val openButton = createOpenResourceButton
     val saveButton = createSaveButton
 
     HBox.setMargin(openButton, new Insets(0, 0, 0, 3))
     HBox.setMargin(saveButton, new Insets(0, 0, 0, 3))
-    generalToolbar = new HBox(newEditorButton, openButton, saveButton)
-    generalToolbar.setAlignment(Pos.CENTER)
-    generalToolbar.setPadding(new Insets(0, 0, 0, 15))
+
+    val bar = new HBox(newEditorButton, openButton, saveButton)
+    bar.setAlignment(Pos.CENTER)
+    bar.setPadding(new Insets(0, 0, 0, 15))
+
+    bar
   }
 
-  private def createBuildToolbar(): Unit = {
+  private def createBuildToolbar(): HBox = {
     val compileButton = createCompileButton
     val debugButton = createDebugButton
     HBox.setMargin(debugButton, new Insets(0, 0, 0, 3))
-    buildToolbar = new HBox(compileButton, debugButton)
-    buildToolbar.setAlignment(Pos.CENTER)
+
+    val bar = new HBox(compileButton, debugButton)
+    bar.setAlignment(Pos.CENTER)
+
+    bar
   }
 
-  private def createMiscToolbar(): Unit = {
+  private def createMiscToolbar(): HBox = {
     val image3DView = new Image(Utilities.getResource(Resources.Images.IMAGE_STRUCTURE_VIEW))
     val imageProject = new Image(Utilities.getResource(Resources.Images.IMAGE_PROJECT_VIEW))
     val imageViewView = new ImageView(imageProject)
@@ -95,18 +94,15 @@ class HeaderArea private() extends GridPane {
         viewButton.setTooltip(structureTooltip)
       }
     })
-    viewButton.selectedProperty.addListener(new ChangeListener[lang.Boolean] {
-      override def changed(observableValue: ObservableValue[_ <: lang.Boolean], oldValue: lang.Boolean, newValue: lang.Boolean): Unit = {
-        if (viewButton.isSelected) imageViewView.setImage(image3DView)
-        else imageViewView.setImage(imageProject)
-      }
+    viewButton.selectedProperty.addListener((_, _, _) => {
+      if (viewButton.isSelected) imageViewView.setImage(image3DView)
+      else imageViewView.setImage(imageProject)
     })
 
     val settingsButton = Utilities.createButton(Resources.Images.IMAGE_SETTINGS, buttonSize, buttonPadding)
     settingsButton.setFocusTraversable(false)
-    settingsButton.setOnAction((_: ActionEvent) => {
-      AppController.instance().setFlowState(FlowState.SETTINGS)
-    })
+    settingsButton.setOnAction(_ => AppController.instance().setFlowState(FlowState.SETTINGS)
+    )
 
     HBox.setMargin(settingsButton, new Insets(0, 0, 0, 10))
 
@@ -122,14 +118,11 @@ class HeaderArea private() extends GridPane {
     layoutButton.setAlignPos(Pos.BOTTOM_CENTER)
 
     val projectExplorerButton = Utilities.createToggleButton(Resources.Images.IMAGE_PROJECT_VIEW, buttonSize, buttonPadding)
-    projectExplorerButton.setOnAction((_: ActionEvent) => {
-      AppController.instance().setProjectExplorerVisible(!AppController.instance().getProjectExplorerVisible)
-    })
+    projectExplorerButton.setOnAction((_: ActionEvent) => AppController.instance().setProjectExplorerVisible(!AppController.instance().getProjectExplorerVisible)
+    )
 
     val outputConsoleButton = Utilities.createToggleButton(Resources.Images.IMAGE_WINDOW, buttonSize, buttonPadding)
-    outputConsoleButton.setOnAction((_: ActionEvent) => {
-      AppController.instance().setConsoleWindowVisible(!AppController.instance().getConsoleWindowVisible)
-    })
+    outputConsoleButton.setOnAction((_: ActionEvent) => AppController.instance().setConsoleWindowVisible(!AppController.instance().getConsoleWindowVisible))
 
     AnchorPane.setLeftAnchor(projectExplorerButton, 5.0)
     AnchorPane.setTopAnchor(projectExplorerButton, 5.0)
@@ -145,29 +138,36 @@ class HeaderArea private() extends GridPane {
     imageLayoutView.fitWidthProperty.bind(Bindings.subtract(layoutButton.widthProperty, 8))
     imageLayoutView.fitHeightProperty.bind(Bindings.subtract(layoutButton.heightProperty, 8))
 
-    quickAccessBox = new SearchBox
-    quickAccessBox.setFocusTraversable(false)
-    quickAccessBox.getTextBox.setPromptText(Resources.QUICK_ACCESS)
-    quickAccessBox.getTextBox.setOnKeyPressed((_: KeyEvent) => {
-    })
-
     HBox.setMargin(quickAccessBox, new Insets(0, 10, 0, 0))
     HBox.setMargin(layoutButton, new Insets(0, 0, 0, 3))
     HBox.setMargin(settingsButton, new Insets(0, 0, 0, 3))
 
-    miscToolbar = new HBox(quickAccessBox, viewButton, layoutButton, settingsButton)
-    miscToolbar.setAlignment(Pos.CENTER_RIGHT)
-    miscToolbar.setPadding(new Insets(0, 15, 0, 0))
+    val bar = new HBox(quickAccessBox, viewButton, layoutButton, settingsButton)
+    bar.setAlignment(Pos.CENTER_RIGHT)
+    bar.setPadding(new Insets(0, 15, 0, 0))
+
+    bar
   }
 
-  private def createDebugButton = {
+
+  private def createQuickAccessBox(): SearchBox = {
+    val box = new SearchBox
+    box.setFocusTraversable(false)
+    box.getTextBox.setPromptText(Resources.QUICK_ACCESS)
+    box.getTextBox.setOnKeyPressed((_: KeyEvent) => {
+    })
+
+    box
+  }
+
+  private def createDebugButton: Button = {
     val debugButton = Utilities.createButton(Resources.Images.IMAGE_DEBUG, buttonSize, buttonPadding)
     debugButton.setFocusTraversable(false)
 
     debugButton
   }
 
-  private def createCompileButton = {
+  private def createCompileButton: Button = {
     val compileButton = Utilities.createButton(Resources.Images.IMAGE_RUN, buttonSize, buttonPadding)
     compileButton.setFocusTraversable(false)
 
@@ -198,19 +198,19 @@ class HeaderArea private() extends GridPane {
     this.getColumnConstraints.addAll(col1, col2, col3)
   }
 
-  private def createNewEditorButton = {
+  private def createNewEditorButton: Button = {
     val newEditorButton = Utilities.createButton(Resources.Images.IMAGE_NEW, buttonSize, 5)
     newEditorButton.setId("new-button")
     newEditorButton.setFocusTraversable(false)
     newEditorButton.setOnAction((_: ActionEvent) => {
       AppController.instance().setFlowState(FlowState.NEW_RESOURCE)
-//      AppController.instance().addTab("new_file", "")
+      //      AppController.instance().addTab("new_file", "")
     })
 
     newEditorButton
   }
 
-  private def createOpenResourceButton = {
+  private def createOpenResourceButton: SlideButton = {
     val imageOpen = new Image(Utilities.getResource(Resources.Images.IMAGE_OPEN))
     val imageOpenView = new ImageView(imageOpen)
 
@@ -230,7 +230,7 @@ class HeaderArea private() extends GridPane {
     openButton
   }
 
-  private def createSaveButton = {
+  private def createSaveButton: SlideButton = {
     val imageSave = new Image(Utilities.getResource(Resources.Images.IMAGE_SAVE))
     val imageSaveView = new ImageView(imageSave)
 
@@ -251,7 +251,7 @@ class HeaderArea private() extends GridPane {
       if (file != null &&
         FxDialogs.showConfirm("Overwrite file?", "Are you sure to overwrite this file?",
           FxDialogs.YES, FxDialogs.NO).equals(FxDialogs.YES)) {
-        MainContent.instance().filePath = file.getParent
+        //MainContent.instance().filePath = file.getParent
 
         val text = AppController.instance().getCurrentTextEditor.getText
         val fileToWrite = new File(file.getCanonicalPath)

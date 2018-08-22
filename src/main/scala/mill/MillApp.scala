@@ -7,17 +7,17 @@ import javafx.stage.Stage
 import mill.ui.MainContent
 
 object MillApp {
-  def main(args: Array[String]) {
+  def main(args: Array[String]): Unit = {
     Application.launch(classOf[MillApp], args: _*)
   }
 }
 
 class MillApp extends Application {
-  override def start(primaryStage: Stage) {
+  override def start(primaryStage: Stage): Unit = {
     val mainContent = MainContent.initialize(primaryStage)
 
-    primaryStage.setTitle("mill - simple developer editor")
-    primaryStage.setScene(mainContent.scene)
+    primaryStage.setTitle("mill - simple code editor")
+    primaryStage.setScene(mainContent.getScene)
     primaryStage.show()
   }
 }

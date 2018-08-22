@@ -74,6 +74,8 @@ class FileSelectView private() extends AnchorPane {
     attachTreeKeyReleased()
     attachTreeEventFilter()
     attachTreeKeyPressed()
+
+    setFileCanceledEvent(_ => AppController.instance().switchToLastState())
   }
 
   private def attachTreeKeyPressed(): Unit = {

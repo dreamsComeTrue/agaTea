@@ -77,7 +77,7 @@ object ActionShortcut {
     checkKeyCombination(actionType, keyEvent.getCode, altKey, controlKey, shiftKey)
   }
 
-  private def checkKeyCombination(actionType: ActionType.ActionType, pressedKeys: KeyCode*) = {
+  private def checkKeyCombination(actionType: ActionType.ActionType, pressedKeys: KeyCode*): Boolean = {
     val keys: List[KeyCode] = actions(actionType).getBinding
     var matchedKeys = 0
     var howManyKeys = 0

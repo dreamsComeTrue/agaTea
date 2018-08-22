@@ -6,7 +6,6 @@ import java.io.File
 import java.lang
 
 import javafx.application.Platform
-import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.scene.control.ListView
 import javafx.scene.input._
 import javafx.scene.layout._
@@ -34,11 +33,8 @@ class MainContent private(stage: Stage) extends BorderPane {
 
   private val windowSwitcher: WindowSwitcher = new WindowSwitcher
   private val windowsList: ListView[String] = new ListView[String]
-  var scene: Scene = _
-  var topPane: GridPane = _
-  var bottomPane: FooterArea = _
-  var centerPane: StackPane = _
-  var filePath: String = new File(".").getCanonicalPath
+  private val scene = createScene()
+  private val filePath: String = new File(".").getCanonicalPath
 
   private var transition: ViewTransition = _
   private var viewsTransition: ViewTransition = _
@@ -48,73 +44,17 @@ class MainContent private(stage: Stage) extends BorderPane {
   init()
 
   private def init(): Unit = {
-    scene = new Scene(this, 1200, 700)
-    scene.getStylesheets.addAll(styles: _*)
-    scene.addEventFilter(KeyEvent.KEY_PRESSED,
-      (event: KeyEvent) => {
-        if (event.isShiftDown) {
-          event.getCode match {
-            case KeyCode.SEMICOLON =>
-              EditorMode.mode.set(EditorMode.COMMAND_MODE)
-            case _ => Unit
-          }
-        } else {
-          event.getCode match {
-            case KeyCode.ESCAPE =>
-              EditorMode.mode.set(EditorMode.NORMAL_MODE)
-            case _ => Unit
-          }
-        }
-      })
-
-    topPane = HeaderArea.instance()
-    bottomPane = FooterArea.instance()
-    centerPane = createCenterPane()
+    val centerPane = createCenterPane()
 
     snb = new SlideNotificationBar(centerPane, null)
 
-    FileSelectView.instance().setFileCanceledEvent((_: FileSelectView.FileSelectEvent) => AppController.instance().switchToLastState())
-
-    setTop(topPane)
-    setBottom(bottomPane)
+    setTop(HeaderArea.instance())
+    setBottom(FooterArea.instance())
     setCenter(snb)
 
     assignCurrentTextEditor(None)
 
-    scene.setOnDragOver((event: DragEvent) => {
-      val db = event.getDragboard
-      if (db.hasFiles) event.acceptTransferModes(TransferMode.COPY)
-      else event.consume()
-    })
-
-    // Dropping over surface
-    scene.setOnDragDropped((event: DragEvent) => {
-      val db = event.getDragboard
-      var success = false
-
-      if (db.hasFiles) {
-        success = true
-
-        for (i <- 0 until db.getFiles.size()) {
-          val filePath = db.getFiles.get(i).getAbsolutePath
-          ResourceFactory.handleFileOpen(filePath)
-        }
-      }
-
-      event.setDropCompleted(success)
-      event.consume()
-    })
-
-    scene.addEventFilter(MouseEvent.MOUSE_MOVED, (event: MouseEvent) => {
-      if (!ApplicationSettings.instance().getStickyProjectExplorer) ProjectView.instance().slideProjectExplorer(event.getSceneX)
-      if (!ApplicationSettings.instance().getStickyEditorConsole) EditorArea.instance().slideEditorConsole(event.getSceneY)
-    })
-
-    ApplicationSettings.instance().productiveModeProperty.addListener(new ChangeListener[lang.Boolean] {
-      override def changed(observableValue: ObservableValue[_ <: lang.Boolean], t: lang.Boolean, newValue: lang.Boolean): Unit = {
-        AppController.instance().switchProductiveMode(newValue)
-      }
-    })
+    ApplicationSettings.instance().productiveModeProperty.addListener((_, t: lang.Boolean, newValue: lang.Boolean) => AppController.instance().switchProductiveMode(newValue))
 
     this.setOnKeyPressed((event: KeyEvent) => {
       val flowState = StateManager.instance().getLastFlowState
@@ -152,19 +92,67 @@ class MainContent private(stage: Stage) extends BorderPane {
     AppController.instance().bindStateManager(this)
   }
 
+  private def createScene(): Scene = {
+    val scn = new Scene(this, 1200, 700)
+    scn.getStylesheets.addAll(styles: _*)
+
+    scn.addEventFilter(KeyEvent.KEY_PRESSED,
+      (event: KeyEvent) => {
+        if (event.isShiftDown) {
+          event.getCode match {
+            case KeyCode.SEMICOLON =>
+              EditorMode.mode.set(EditorMode.COMMAND_MODE)
+            case _ => Unit
+          }
+        } else {
+          event.getCode match {
+            case KeyCode.ESCAPE =>
+              EditorMode.mode.set(EditorMode.NORMAL_MODE)
+            case _ => Unit
+          }
+        }
+      })
+
+    scn.setOnDragOver((event: DragEvent) => {
+      val db = event.getDragboard
+      if (db.hasFiles) event.acceptTransferModes(TransferMode.COPY)
+      else event.consume()
+    })
+
+    // Dropping over surface
+    scn.setOnDragDropped((event: DragEvent) => {
+      val db = event.getDragboard
+      var success = false
+
+      if (db.hasFiles) {
+        success = true
+
+        for (i <- 0 until db.getFiles.size()) {
+          val filePath = db.getFiles.get(i).getAbsolutePath
+          ResourceFactory.handleFileOpen(filePath)
+        }
+      }
+
+      event.setDropCompleted(success)
+      event.consume()
+    })
+
+    scn.addEventFilter(MouseEvent.MOUSE_MOVED, (event: MouseEvent) => {
+      if (!ApplicationSettings.instance().getStickyProjectExplorer) ProjectView.instance().slideProjectExplorer(event.getSceneX)
+      if (!ApplicationSettings.instance().getStickyEditorConsole) EditorArea.instance().slideEditorConsole(event.getSceneY)
+    })
+
+    scn
+  }
+
   private def hideToolWindowSwitcher(): Unit = {
     if (windowSwitcher.isVisible) {
       windowSwitcher.setVisible(false)
 
-      val selectedWindow = windowsList.getSelectionModel.getSelectedItem
-
-      selectedWindow match {
-        case Resources.PROJECT_EXPLORER_WINDOW_NAME =>
-          ProjectExplorer.instance().requestFocus()
-        case Resources.EDITOR_WINDOW_NAME =>
-          EditorArea.instance().requestFocus()
-        case Resources.CONSOLE_WINDOW_NAME =>
-          EditorArea.instance().getEditorConsole.requestFocus()
+      windowsList.getSelectionModel.getSelectedItem match {
+        case Resources.PROJECT_EXPLORER_WINDOW_NAME => ProjectExplorer.instance().requestFocus()
+        case Resources.EDITOR_WINDOW_NAME => EditorArea.instance().requestFocus()
+        case Resources.CONSOLE_WINDOW_NAME => EditorArea.instance().getEditorConsole.requestFocus()
         case _ =>
       }
     }
@@ -172,9 +160,6 @@ class MainContent private(stage: Stage) extends BorderPane {
 
   private def createCenterPane(): StackPane = {
     val centerPane = new StackPane
-
-    ProjectView.instance().setPrefWidth(Double.MaxValue)
-    ProjectView.instance().setPrefHeight(Double.MaxValue)
 
     transition = new ViewTransition(ProjectView.instance(), StructureView.instance()) {
       override def onFirstViewStart(): Unit = {
@@ -228,11 +213,7 @@ class MainContent private(stage: Stage) extends BorderPane {
       val textEditor = textEditorOpt.get
       val codeArea = textEditor.codeAreaVirtual.getContent
 
-      EditorMode.mode.addListener(new ChangeListener[Number] {
-        override def changed(observableValue: ObservableValue[_ <: Number], t: Number, t1: Number): Unit = {
-          if (t1.intValue() == EditorMode.NORMAL_MODE) codeArea.requestFocus()
-        }
-      })
+      EditorMode.mode.addListener((_, t: Number, t1: Number) => if (t1.intValue() == EditorMode.NORMAL_MODE) codeArea.requestFocus())
 
       setFocus(codeArea)
 
@@ -243,11 +224,7 @@ class MainContent private(stage: Stage) extends BorderPane {
 
       changeFunc()
 
-      codeArea.caretPositionProperty().addListener(new ChangeListener[Integer] {
-        override def changed(observableValue: ObservableValue[_ <: Integer], t: Integer, t1: Integer): Unit = {
-          changeFunc()
-        }
-      })
+      codeArea.caretPositionProperty().addListener((_, _, _) => changeFunc())
     } else {
       FooterArea.instance().setInfoText("")
       FooterArea.instance().setPosLabel(0, 0)
@@ -314,13 +291,9 @@ class MainContent private(stage: Stage) extends BorderPane {
   /**
     * Hides popup bar at the top of workspace with custom content
     */
-  def hideContentBar(): Unit = {
-    snb.hide()
-  }
+  def hideContentBar(): Unit = snb.hide()
 
-  def setContentBarHeight(height: Double): Unit = {
-    snb.setBarHeight(height)
-  }
+  def setContentBarHeight(height: Double): Unit = snb.setBarHeight(height)
 
   //topPane.setMinHeight(1)
   //topPane.setMaxHeight(1)

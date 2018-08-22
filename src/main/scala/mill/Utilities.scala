@@ -4,11 +4,15 @@ package mill
 
 import java.io.{File, IOException, InputStream}
 import java.lang
+import java.util.function.Consumer
 
 import javafx.beans.binding.Bindings
 import javafx.beans.value.{ChangeListener, ObservableValue}
+import javafx.collections.ListChangeListener
+import javafx.event.{Event, EventHandler}
 import javafx.scene.control._
 import javafx.scene.image.{Image, ImageView}
+import javafx.util.Callback
 import mill.resources.ResourceHandler
 import org.apache.commons.lang3.StringUtils
 
@@ -177,4 +181,23 @@ object Utilities {
     }
     true
   }
+
+  def makeChangeListener[T](onChangeAction: (ObservableValue[_ <: T], T, T) => Unit): ChangeListener[T] = {
+    (observable: ObservableValue[_ <: T], oldValue: T, newValue: T) => {
+      onChangeAction(observable, oldValue, newValue)
+    }
+  }
+
+  def makeListChangeListener[E](onChangedAction: ListChangeListener.Change[_ <: E] => Unit): ListChangeListener[E] = (changeItem: ListChangeListener.Change[_ <: E]) => {
+    onChangedAction(changeItem)
+  }
+
+  def makeCellFactoryCallback[T](listCellGenerator: ListView[T] => ListCell[T]): Callback[ListView[T], ListCell[T]] = (list: ListView[T]) => listCellGenerator(list)
+
+  def makeEventHandler[E <: Event](f: E => Unit): EventHandler[E] = (e: E) => f(e)
+
+  def makeConsumer[A](function: A => Unit): Consumer[A] = new Consumer[A]() {
+    override def accept(arg: A): Unit = function.apply(arg)
+  }
+
 }

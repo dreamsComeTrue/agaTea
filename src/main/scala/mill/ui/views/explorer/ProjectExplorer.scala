@@ -188,7 +188,7 @@ class ProjectExplorer private() extends BorderPane {
     val project: Project = ProjectsRepository.instance().getActiveProject
     val packageFile: PackageFile = new PackageFile(project, packageName, packageName, false)
 
-    if (selectedTreeItems.size > 0) {
+    if (selectedTreeItems.nonEmpty) {
       for (i <- 0 until selectedTreeItems.size()) {
         val selectedTreeItem: TreeItem[Resource] = selectedTreeItems.get(i)
 

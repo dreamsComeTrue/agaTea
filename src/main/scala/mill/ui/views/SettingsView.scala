@@ -23,6 +23,7 @@ import mill.resources.settings.{ApplicationSettings, ProjectSettings}
 import mill.ui.controls.{PercentageTreeTableView, SearchBox}
 import mill.{Resources, Utilities}
 import org.controlsfx.tools.Borders
+import scalafx.beans.property.ObjectProperty
 import scalafx.collections.ObservableBuffer
 
 import scala.collection.JavaConverters._
@@ -171,10 +172,10 @@ class SettingsView private() extends BorderPane {
     })
 
     val autocompletePairedChars: CheckBox = new CheckBox(Resources.AUTOCOMPLETE_PAIRED_CHARS)
-    autocompletePairedChars.setSelected(ApplicationSettings.instance().getAutocompletePairedChars)
-    autocompletePairedChars.setOnAction((_: ActionEvent) => ApplicationSettings.instance().setAutocompletePairedChars(autocompletePairedChars.isSelected))
+    autocompletePairedChars.setSelected(ApplicationSettings.instance().getAutoCompletePairedChars)
+    autocompletePairedChars.setOnAction((_: ActionEvent) => ApplicationSettings.instance().setAutoCompletePairedChars(autocompletePairedChars.isSelected))
 
-    ApplicationSettings.instance().autocompletePairedCharsProperty.addListener(new ChangeListener[lang.Boolean] {
+    ApplicationSettings.instance().autoCompletePairedCharsProperty.addListener(new ChangeListener[lang.Boolean] {
       override def changed(observableValue: ObservableValue[_ <: lang.Boolean], t: lang.Boolean, newValue: lang.Boolean): Unit = {
         autocompletePairedChars.setSelected(newValue)
       }
@@ -306,7 +307,7 @@ class SettingsView private() extends BorderPane {
   }
 
   private def prepareProjectSettingsPane: GridPane = {
-    val activeProject: SimpleObjectProperty[Project] = ProjectsRepository.instance().activeProjectProperty
+    val activeProject: ObjectProperty[Project] = ProjectsRepository.instance().activeProjectProperty
     val activeProjectObj: Project = activeProject.get
     val gridPane: GridPane = new GridPane
 

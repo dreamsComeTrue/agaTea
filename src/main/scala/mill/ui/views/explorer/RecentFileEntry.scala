@@ -67,7 +67,7 @@ class RecentFileEntry() {
     closeNode.setOnMouseClicked((event: MouseEvent) => {
       val openedFiles = ProjectsRepository.instance().getOpenFiles
 
-      openedFiles.keySet.forEach((file: String) => ProjectExplorer.instance().closeResourceInEditor(file))
+      openedFiles.keySet.foreach((file: String) => ProjectExplorer.instance().closeResourceInEditor(file))
 
       event.consume()
 

@@ -5,15 +5,17 @@ package mill.ui
 import java.io.File
 
 import com.sun.javafx.scene.control.skin.SplitPaneSkin
-import javafx.beans.value.{ChangeListener, ObservableValue}
+import javafx.beans.value.ObservableValue
 import javafx.event.ActionEvent
 import javafx.geometry.Orientation
 import javafx.scene.control.{Label, SplitPane, Tab, TabPane}
 import javafx.scene.image.{Image, ImageView}
 import javafx.scene.input.{MouseButton, MouseEvent}
 import javafx.scene.layout.{BorderPane, StackPane}
+import mill.Utilities
 import mill.controller.{AppController, FXStageInitializer, GlobalState}
-import mill.resources.{Resource, ResourceFactory}
+import mill.model.ProjectsRepository
+import mill.resources.Resource
 import mill.resources.settings.ApplicationSettings
 import mill.ui.controls.SplitPaneDividerSlider
 import mill.ui.editor.{EditorBuffer, EditorWindow, EditorWindowContainer}
@@ -30,28 +32,23 @@ class EditorArea private() extends FXStageInitializer {
   private val editorWindows = new ObservableBuffer[EditorWindow]()
   private val activeEditorWindow = new ObjectProperty[EditorWindow]()
 
-  private val tabPane = createTabPane()
-  private var centerStack: StackPane = createCenterStack()
+  private val tabPane: TabPane = createTabPane()
+  private val centerStack: StackPane = createCenterStack()
   private val editorConsole: EditorConsole = new EditorConsole
-  private var consoleSplitPane: SplitPane = createConsoleSplitPane()
-  private var consoleSlider: SplitPaneDividerSlider = createConsoleSlider()
+  private val consoleSplitPane: SplitPane = createConsoleSplitPane()
+  private val consoleSlider: SplitPaneDividerSlider = createConsoleSlider()
   private var consoleWindowVisible = true
 
-  def init(): SplitPane = {
-    initActiveEditorWindow()
+  initActiveEditorWindow()
 
-    consoleSplitPane
-  }
-
-  def initActiveEditorWindow(): Unit = {
+  private def initActiveEditorWindow(): Unit = {
     activeEditorWindow.onChange { (_, oldWindow: EditorWindow, newWindow: EditorWindow) => {
       if (oldWindow != null) {
         oldWindow.setActiveBuffer(null)
         oldWindow.setActive(false)
       }
 
-      if (newWindow != null) newWindow.setActive(true)
-      else FooterArea.instance().setPosLabel(0, 0)
+      if (newWindow != null) newWindow.setActive(true) else FooterArea.instance().setPosLabel(0, 0)
     }
     }
   }
@@ -69,42 +66,38 @@ class EditorArea private() extends FXStageInitializer {
     true
   }
 
-  def createCenterStack(): StackPane = {
+  private def createCenterStack(): StackPane = {
     val centerContent = new BorderPane
     centerContent.setCenter(windowContainer)
     centerContent.setMinHeight(0.0)
 
-    centerStack = new StackPane(createLogo(), centerContent)
-    centerStack.getStyleClass.add("code-area")
+    val stack = new StackPane(createLogo(), centerContent)
+    stack.getStyleClass.add("code-area")
 
-    centerStack
+    stack
   }
 
-  def createConsoleSplitPane(): SplitPane = {
-    editorConsole.init()
+  private def createConsoleSplitPane(): SplitPane = {
+    val pane = new SplitPane(centerStack, editorConsole)
+    pane.setOrientation(Orientation.VERTICAL)
+    pane.getStyleClass.add("split-pane")
+    pane.setMinSize(0.0, 0.0)
+    pane.setDividerPositions(0.8f)
 
-    consoleSplitPane = new SplitPane(centerStack, editorConsole)
-    consoleSplitPane.setOrientation(Orientation.VERTICAL)
-    consoleSplitPane.getStyleClass.add("split-pane")
-    consoleSplitPane.setMinSize(0.0, 0.0)
-    consoleSplitPane.setDividerPositions(0.8f)
-
-    consoleSplitPane
+    pane
   }
 
   def createConsoleSlider(): SplitPaneDividerSlider = {
-    consoleSlider = new SplitPaneDividerSlider(consoleSplitPane, 0, SplitPaneDividerSlider.Direction.DOWN)
-    consoleSlider.setLastDividerPosition(consoleSplitPane.getDividerPositions()(0))
+    val slider = new SplitPaneDividerSlider(consoleSplitPane, 0, SplitPaneDividerSlider.Direction.DOWN)
+    slider.setLastDividerPosition(consoleSplitPane.getDividerPositions()(0))
 
     SplitPane.setResizableWithParent(editorConsole, false)
 
-    editorConsole.heightProperty.addListener(new ChangeListener[Number] {
-      override def changed(observableValue: ObservableValue[_ <: Number], oldValue: Number, newValue: Number): Unit = {
-        consoleSlider.setCurrentDividerPosition(consoleSplitPane.getDividerPositions()(0))
-      }
-    })
+    editorConsole.heightProperty.addListener(Utilities.makeChangeListener[Number]
+      ((_: ObservableValue[_ <: Number], _: Number, _: Number) => slider.setCurrentDividerPosition(consoleSplitPane.getDividerPositions()(0)))
+    )
 
-    consoleSlider
+    slider
   }
 
   private def createLogo(): ImageView = {
@@ -152,30 +145,29 @@ class EditorArea private() extends FXStageInitializer {
   private def createTabPane(): TabPane = {
     val tabPane = new TabPane()
 
-    tabPane.getSelectionModel.selectedItemProperty().addListener(new ChangeListener[Tab] {
-      override def changed(observableValue: ObservableValue[_ <: Tab], t: Tab, t1: Tab): Unit = {
+    tabPane.getSelectionModel.selectedItemProperty().addListener(
+      Utilities.makeChangeListener[Tab]((observableValue: ObservableValue[_ <: Tab], _: Tab, _: Tab) => {
         if (observableValue.getValue != null) {
           val textEditor = observableValue.getValue.getContent.asInstanceOf[TextEditor]
           AppController.instance().assignCurrentTextEditor(Option(textEditor))
         } else {
           AppController.instance().assignCurrentTextEditor(None)
         }
-      }
-    })
+      }))
 
     tabPane
   }
 
-  def getEditorConsole = editorConsole
+  def getEditorConsole: EditorConsole = editorConsole
+
+  def getConsoleSplitPane: SplitPane = consoleSplitPane
 
   def isConsoleWindowVisible: Boolean = consoleWindowVisible
 
   def setConsoleWindowVisible(visible: Boolean): Unit = {
     consoleWindowVisible = visible
 
-    if (visible) consoleSlider.recomputeSize()
-    else consoleSlider.setEventHandler((_: ActionEvent) => {
-    })
+    if (visible) consoleSlider.recomputeSize() else consoleSlider.setEventHandler((_: ActionEvent) => {})
 
     consoleSlider.setAimContentVisible(visible)
   }
@@ -195,12 +187,8 @@ class EditorArea private() extends FXStageInitializer {
   }
 
   def closeResourceInEditor(path: String): Unit = {
-    for (i <- 0 until editorWindows.size()) {
-      val window = editorWindows(i)
-
-      for (i <- 0 until window.getBuffers.size()) {
-        val buffer = window.getBuffers.get(i)
-
+    for (window <- editorWindows) {
+      for (buffer <- window.getBuffers) {
         if (buffer.getPath == path) {
           window.removeBuffer(buffer)
           return
@@ -209,7 +197,8 @@ class EditorArea private() extends FXStageInitializer {
     }
   }
 
-  def openResourceInEditor(title: String, path: String, resource: Resource): Unit = { //	Try to find already opened file
+  def openResourceInEditor(title: String, path: String, resource: Resource): Unit = {
+    //	Try to find already opened file
     for (window <- editorWindows) {
       for (buffer <- window.getBuffers) {
         if (buffer.getPath == path) {
@@ -220,11 +209,13 @@ class EditorArea private() extends FXStageInitializer {
 
     if (activeEditorWindow() == null) {
       val window = new EditorWindow
+
       addEditorWindow(window)
       setActiveEditorWindow(window)
     }
 
     GlobalState.instance().addOpenedFile(path)
+    ProjectsRepository.instance().addOpenedFile(path, resource)
 
     val buffer = activeEditorWindow().addBuffer(title)
     buffer.openFile(FilenameUtils.normalize(path), resource)
@@ -246,8 +237,7 @@ class EditorArea private() extends FXStageInitializer {
     windowContainer.removeWindow(window)
     editorWindows.remove(window)
 
-    if (editorWindows.nonEmpty) activeEditorWindow() = editorWindows.get(editorWindows.size - 1)
-    else activeEditorWindow() = null
+    if (editorWindows.nonEmpty) activeEditorWindow() = editorWindows.get(editorWindows.size - 1) else activeEditorWindow() = null
   }
 
   def splitToRight(buffer: EditorBuffer): Unit = {
@@ -286,7 +276,7 @@ class EditorArea private() extends FXStageInitializer {
     }
   }
 
-  private def splitFunction(buffer: EditorBuffer) = { //	Store old pane
+  private def splitFunction(buffer: EditorBuffer): Pair[EditorWindow, EditorWindow] = { //	Store old pane
     val oldWindow = buffer.getWindow
 
     //	Create new window with selected buffer
@@ -301,7 +291,7 @@ class EditorArea private() extends FXStageInitializer {
 
     //	Attach listener for window removal, when no buffer is active
     val buffers = window.getBuffers
-    buffers.onChange((_: ObservableBuffer[EditorBuffer], c: Seq[Change[EditorBuffer]]) => if (buffers.isEmpty) removeEditorWindow(window))
+    buffers.onChange((_: ObservableBuffer[EditorBuffer], _: Seq[Change[EditorBuffer]]) => if (buffers.isEmpty) removeEditorWindow(window))
 
     Pair.of(window, oldWindow)
   }
@@ -333,6 +323,7 @@ class EditorArea private() extends FXStageInitializer {
     }
 
     if (nextIndex < 0) nextIndex = buffers.size - 1
+
     getActiveEditorWindow.setActiveBuffer(buffers.get(nextIndex))
   }
 
@@ -347,6 +338,7 @@ class EditorArea private() extends FXStageInitializer {
     }
 
     if (nextIndex >= buffers.size) nextIndex = 0
+
     getActiveEditorWindow.setActiveBuffer(buffers.get(nextIndex))
   }
 
@@ -355,67 +347,67 @@ class EditorArea private() extends FXStageInitializer {
   }
 
   def actionSwitchToPreviousFile(): Unit = {
-//    val openedFilesCount = openedFilesList.getItems.size
-//    val recentFilesCount = recentFilesList.getItems.size
-//
-//    if ((openedFilesCount > 0 || recentFilesCount > 0) && !windowSwitcher.isVisible) {
-//      currFileSwitcherIndex = -1
-//      windowSwitcher.setVisible(true)
-//    }
-//    if (windowSwitcher.isVisible) {
-//      currFileSwitcherIndex -= 1
-//      if (currFileSwitcherIndex < 0) currFileSwitcherIndex = openedFilesCount + recentFilesCount - 1
-//      if (currFileSwitcherIndex < openedFilesCount) {
-//        openedFilesList.requestFocus()
-//        openedFilesList.getSelectionModel.select(currFileSwitcherIndex)
-//        openedFilesList.getFocusModel.focus(currFileSwitcherIndex)
-//      }
-//      else {
-//        recentFilesList.requestFocus()
-//        recentFilesList.getSelectionModel.select(currFileSwitcherIndex - openedFilesCount)
-//        recentFilesList.getFocusModel.focus(currFileSwitcherIndex - openedFilesCount)
-//      }
-//    }
+    //    val openedFilesCount = openedFilesList.getItems.size
+    //    val recentFilesCount = recentFilesList.getItems.size
+    //
+    //    if ((openedFilesCount > 0 || recentFilesCount > 0) && !windowSwitcher.isVisible) {
+    //      currFileSwitcherIndex = -1
+    //      windowSwitcher.setVisible(true)
+    //    }
+    //    if (windowSwitcher.isVisible) {
+    //      currFileSwitcherIndex -= 1
+    //      if (currFileSwitcherIndex < 0) currFileSwitcherIndex = openedFilesCount + recentFilesCount - 1
+    //      if (currFileSwitcherIndex < openedFilesCount) {
+    //        openedFilesList.requestFocus()
+    //        openedFilesList.getSelectionModel.select(currFileSwitcherIndex)
+    //        openedFilesList.getFocusModel.focus(currFileSwitcherIndex)
+    //      }
+    //      else {
+    //        recentFilesList.requestFocus()
+    //        recentFilesList.getSelectionModel.select(currFileSwitcherIndex - openedFilesCount)
+    //        recentFilesList.getFocusModel.focus(currFileSwitcherIndex - openedFilesCount)
+    //      }
+    //    }
   }
 
   def actionSwitchToNextFile(): Unit = {
-//    val openedFilesCount = openedFilesList.getItems.size
-//    val recentFilesCount = recentFilesList.getItems.size
-//    if ((openedFilesCount > 0 || recentFilesCount > 0) && !windowSwitcher.isVisible) {
-//      currFileSwitcherIndex = -1
-//      windowSwitcher.setVisible(true)
-//    }
-//    if (windowSwitcher.isVisible) {
-//      currFileSwitcherIndex += 1
-//      if (currFileSwitcherIndex >= openedFilesCount + recentFilesCount) currFileSwitcherIndex = 0
-//      if (currFileSwitcherIndex < openedFilesCount) {
-//        openedFilesList.requestFocus()
-//        openedFilesList.getSelectionModel.select(currFileSwitcherIndex)
-//        openedFilesList.getFocusModel.focus(currFileSwitcherIndex)
-//      }
-//      else {
-//        recentFilesList.requestFocus()
-//        recentFilesList.getSelectionModel.select(currFileSwitcherIndex - openedFilesCount)
-//        recentFilesList.getFocusModel.focus(currFileSwitcherIndex - openedFilesCount)
-//      }
-//    }
+    //    val openedFilesCount = openedFilesList.getItems.size
+    //    val recentFilesCount = recentFilesList.getItems.size
+    //    if ((openedFilesCount > 0 || recentFilesCount > 0) && !windowSwitcher.isVisible) {
+    //      currFileSwitcherIndex = -1
+    //      windowSwitcher.setVisible(true)
+    //    }
+    //    if (windowSwitcher.isVisible) {
+    //      currFileSwitcherIndex += 1
+    //      if (currFileSwitcherIndex >= openedFilesCount + recentFilesCount) currFileSwitcherIndex = 0
+    //      if (currFileSwitcherIndex < openedFilesCount) {
+    //        openedFilesList.requestFocus()
+    //        openedFilesList.getSelectionModel.select(currFileSwitcherIndex)
+    //        openedFilesList.getFocusModel.focus(currFileSwitcherIndex)
+    //      }
+    //      else {
+    //        recentFilesList.requestFocus()
+    //        recentFilesList.getSelectionModel.select(currFileSwitcherIndex - openedFilesCount)
+    //        recentFilesList.getFocusModel.focus(currFileSwitcherIndex - openedFilesCount)
+    //      }
+    //    }
   }
 
   def actionHideWindowSwitcher(): Unit = {
-//    if (windowSwitcher.isVisible) {
-//      windowSwitcher.setVisible(false)
-//
-//      val openedFilesCount = openedFilesList.getItems.size
-//      var selectedItem = ""
-//
-//      if (currFileSwitcherIndex < openedFilesCount) selectedItem = openedFilesList.getSelectionModel.getSelectedItem
-//      else selectedItem = recentFilesList.getSelectionModel.getSelectedItem
-//
-//      ResourceFactory.handleFileOpen(selectedItem)
-//
-//      openedFilesList.getItems.remove(selectedItem)
-//      openedFilesList.getItems.add(0, selectedItem)
-//    }
+    //    if (windowSwitcher.isVisible) {
+    //      windowSwitcher.setVisible(false)
+    //
+    //      val openedFilesCount = openedFilesList.getItems.size
+    //      var selectedItem = ""
+    //
+    //      if (currFileSwitcherIndex < openedFilesCount) selectedItem = openedFilesList.getSelectionModel.getSelectedItem
+    //      else selectedItem = recentFilesList.getSelectionModel.getSelectedItem
+    //
+    //      ResourceFactory.handleFileOpen(selectedItem)
+    //
+    //      openedFilesList.getItems.remove(selectedItem)
+    //      openedFilesList.getItems.add(0, selectedItem)
+    //    }
   }
 
 

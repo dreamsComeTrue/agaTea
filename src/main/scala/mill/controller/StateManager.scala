@@ -10,34 +10,17 @@ import mill.ui.views.FileSelectView.FileSelectViewMode
 import mill.ui.views._
 
 class StateManager {
-  private var applicationProjectState: ApplicationProjectState = _
-  private var applicationStructureState: ApplicationStructureState = _
-  private var newResourceState: NewResourceState = _
-  private var settingsState: SettingsState = _
-  private var openResourceState: OpenResourceState = _
+  private val applicationProjectState = new ApplicationProjectState
+  private val applicationStructureState = new ApplicationStructureState
+  private val newResourceState = new NewResourceState
+  private val settingsState = new SettingsState
+  private val openResourceState = new OpenResourceState
 
   private var lastFlowState: FlowState = _
 
-  private var actualState: ApplicationState = _
-  private var lastState: ApplicationState = _
+  private var actualState: ApplicationState = applicationProjectState
+  private var lastState: ApplicationState = actualState
   private var appViewState: ApplicationState = _
-
-  init()
-
-  def init(): Unit = {
-    prepareStates()
-
-    actualState = applicationProjectState
-    lastState = actualState
-  }
-
-  private def prepareStates(): Unit = {
-    applicationProjectState = new ApplicationProjectState
-    applicationStructureState = new ApplicationStructureState
-    newResourceState = new NewResourceState
-    settingsState = new SettingsState
-    openResourceState = new OpenResourceState
-  }
 
   def setActualState(newFlowState: FlowState): Unit = {
     val realLastState = lastState
@@ -73,12 +56,14 @@ class StateManager {
         settingsState.setOnSecondViewCompleted((_: Void) => ProjectView.instance().showView(null))
         settingsState.process(ProjectView.instance().getEditorPane)
         settingsState.setOnSecondViewCompleted(null)
+
         lastFlowState = FlowState.APPLICATION_PROJECT
       }
       else if (realLastState == applicationStructureState) {
         settingsState.setOnSecondViewCompleted((_: Void) => StructureView.instance().showView(null))
         settingsState.process(StructureView.instance().getRootNode)
         settingsState.setOnSecondViewCompleted(null)
+
         lastFlowState = FlowState.APPLICATION_STRUCTURE
       }
 
@@ -98,8 +83,7 @@ class StateManager {
 
     OpenResourceView.instance().refreshFileSelectView()
 
-    val fileSelectView = FileSelectView.instance()
-    fileSelectView.initialize("", FileSelectViewMode.OPEN_FILE)
+    FileSelectView.instance().initialize("", FileSelectViewMode.OPEN_FILE)
 
     if (actualState == applicationProjectState) {
       previousContent = switchBackToProjectState(openResourceState)
@@ -117,9 +101,9 @@ class StateManager {
       if (realLastState == applicationProjectState) {
         openResourceState.setOnSecondViewCompleted((_: Void) => {
           ProjectView.instance().showView(null)
-          fileSelectView.setOpacity(1.0)
-          fileSelectView.setScaleX(1.0)
-          fileSelectView.setScaleY(1.0)
+          FileSelectView.instance().setOpacity(1.0)
+          FileSelectView.instance().setScaleX(1.0)
+          FileSelectView.instance().setScaleY(1.0)
         })
 
         openResourceState.process(ProjectView.instance().getEditorPane)
@@ -129,9 +113,9 @@ class StateManager {
       else if (realLastState == applicationStructureState) {
         openResourceState.setOnSecondViewCompleted((_: Void) => {
           StructureView.instance().showView(null)
-          fileSelectView.setOpacity(1.0)
-          fileSelectView.setScaleX(1.0)
-          fileSelectView.setScaleY(1.0)
+          FileSelectView.instance().setOpacity(1.0)
+          FileSelectView.instance().setScaleX(1.0)
+          FileSelectView.instance().setScaleY(1.0)
         })
 
         openResourceState.process(StructureView.instance().getRootNode)
@@ -192,6 +176,7 @@ class StateManager {
 
   private def switchToStructureState(): Unit = {
     var previousContent: Node = null
+
     if (actualState == applicationProjectState) previousContent = ProjectView.instance()
     else if (actualState == newResourceState) {
       ProjectView.instance().showView(null)
@@ -257,21 +242,17 @@ class StateManager {
   private def switchBackToStructureState(state: ApplicationState): Node = {
     StructureView.instance().showView(state.getContent)
 
-    val previousContent = StructureView.instance().getRootNode
-
     appViewState = applicationStructureState
 
-    previousContent
+    StructureView.instance().getRootNode
   }
 
   private def switchBackToProjectState(state: ApplicationState): Node = {
     ProjectView.instance().showView(state.getContent)
 
-    val previousContent = ProjectView.instance().getEditorPane
-
     appViewState = applicationProjectState
 
-    previousContent
+    ProjectView.instance().getEditorPane
   }
 
   private def switchStateFromTo(fromState: FlowState, toState: FlowState): Boolean = {

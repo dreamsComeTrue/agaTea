@@ -1,30 +1,32 @@
 package mill.ui.editor
 
-import java.io.{File, IOException}
+import java.io.{File, PrintWriter}
 import java.lang
 
-import javafx.beans.property.SimpleObjectProperty
-import javafx.beans.value.{ChangeListener, ObservableObjectValue, ObservableValue}
+import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.scene.input.ScrollEvent
 import javafx.scene.layout.AnchorPane
 import mill.controller.AppController
 import mill.resources.Resource
 import mill.resources.settings.ApplicationSettings
 import mill.ui.{FooterArea, TextEditor}
-import org.apache.commons.io.{FileUtils, FilenameUtils}
+import org.apache.commons.io.FilenameUtils
+import scalafx.beans.property.ObjectProperty
+
+import scala.io.Source
 
 /**
   * Created by Dominik 'squall' Jasiński on 2018-08-17.
   */
 class EditorBuffer(var window: EditorWindow, var title: String) extends AnchorPane {
   private var path = title
-  private var resource = new SimpleObjectProperty[Resource]()
+  private var resource = new ObjectProperty[Resource]()
   private val textEditor = new TextEditor(title, "", title) //	Temporarily, until 'openFile' gets called
   private var file: File = _
 
   init()
 
-  private def init() {
+  private def init(): Unit = {
     val focusedListener: ChangeListener[java.lang.Boolean] = (_: ObservableValue[_ <: java.lang.Boolean], _: java.lang.Boolean, _: java.lang.Boolean) => {
       if (isFocused) {
         AppController.instance().setActiveEditorWindow(EditorBuffer.this.window)
@@ -119,17 +121,9 @@ class EditorBuffer(var window: EditorWindow, var title: String) extends AnchorPa
     this.path = FilenameUtils.normalize(pathPar)
     if (path != null) {
       file = new File(path)
-      var string: String = null
-      try
-        string = FileUtils.readFileToString(file)
-      catch {
-        case e: IOException =>
-          e.printStackTrace()
-      }
-
       this.resource.set(res)
 
-      textEditor.setText(string)
+      textEditor.setText(Source.fromFile(path).getLines.mkString)
 
       //  Associate SourceFx content with selected resource from project
       if (resource != null) {
@@ -147,16 +141,14 @@ class EditorBuffer(var window: EditorWindow, var title: String) extends AnchorPa
 
       System.out.println(text + "<<<")
 
-      try
-        FileUtils.writeStringToFile(file, text)
-      catch {
-        case e: IOException =>
-          e.printStackTrace()
+      new PrintWriter(file.getPath) {
+        write(text)
+        close()
       }
     }
   }
 
   def getResource: Resource = resource.get
 
-  def resourceProperty: ObservableObjectValue[Resource] = resource
+  def resourceProperty: ObjectProperty[Resource] = resource
 }

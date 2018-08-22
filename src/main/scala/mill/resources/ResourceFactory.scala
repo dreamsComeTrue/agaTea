@@ -28,32 +28,35 @@ object ResourceFactory {
 
     for (c <- allClasses) {
       val className: String = c.getName
-      var clazz: Class[AnyRef] = null
 
       //	We are adding this to the end of resource handlers
       //	so it is looked as last one from all Resource Handlers
       if (className != "DefaultFile") {
-        try {
-          clazz = Class.forName(className).asInstanceOf[Class[AnyRef]]
-
-          val o: Any = clazz.newInstance
-          val resGroupName: String = "getGroupName"
-          var m: Method = clazz.getDeclaredMethod(resGroupName)
-          m.invoke(o)
-
-          val resMethodName: String = "getGroupResourceName"
-          m = clazz.getDeclaredMethod(resMethodName)
-          m.invoke(o)
-
-          resourceHandlers += o.asInstanceOf[ResourceHandler]
-        } catch {
-          case e@(_: IllegalAccessException | _: NoSuchMethodException | _: InvocationTargetException | _: InstantiationException | _: ClassNotFoundException) =>
-            e.printStackTrace()
-        }
+        addResourceHandler(className)
       }
     }
 
     defaultResourceHandler = new DefaultFile.DefaultFileResourceHandler
+  }
+
+  private def addResourceHandler (className: String): Unit ={
+    try {
+      val clazz = Class.forName(className).asInstanceOf[Class[AnyRef]]
+
+      val o: Any = clazz.newInstance
+      val resGroupName: String = "getGroupName"
+      var m: Method = clazz.getDeclaredMethod(resGroupName)
+      m.invoke(o)
+
+      val resMethodName: String = "getGroupResourceName"
+      m = clazz.getDeclaredMethod(resMethodName)
+      m.invoke(o)
+
+      resourceHandlers += o.asInstanceOf[ResourceHandler]
+    } catch {
+      case e@(_: IllegalAccessException | _: NoSuchMethodException | _: InvocationTargetException | _: InstantiationException | _: ClassNotFoundException) =>
+        e.printStackTrace()
+    }
   }
 
   def getResourceHandlers: ListBuffer[ResourceHandler] = resourceHandlers
@@ -65,14 +68,16 @@ object ResourceFactory {
     if (Files.exists(path) && !Files.isDirectory(path, LinkOption.NOFOLLOW_LINKS)) {
       val file: String = FilenameUtils.getName(fileName)
       val filePath: String = FilenameUtils.normalize(FilenameUtils.getFullPath(fileName) + File.separatorChar + file)
-      var foundHandler: Boolean = false
 
       //  If file is already loaded...
-      if (ProjectsRepository.instance().isFileOpened(filePath)) { //  ...and it's in EditorWindow - then focus it
+      if (ProjectsRepository.instance().isFileOpened(filePath)) {
+        //  ...and it's in EditorWindow - then focus it
         if (AppController.instance().focusEditor(filePath)) return ProjectsRepository.instance().getOpenedFile(filePath)
       }
 
       if (ProjectsRepository.instance().isProjectOpened(filePath)) return ProjectsRepository.instance().getOpenedProject(filePath)
+
+      var foundHandler: Boolean = false
 
       //  Try to open resource with registered handlers
       for (handler <- resourceHandlers) {

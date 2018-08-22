@@ -145,9 +145,13 @@ class TextEditor(val tabName: String, val text: String, val path: String) extend
 
   def showLineNumbers(getLineNumbersVisible: Boolean) = {}
 
-  def setSyntaxHighlightingEnabled(getSyntaxHighlightingEnabled: Boolean) = {}
+  def setSyntaxHighlightingEnabled(getSyntaxHighlightingEnabled: Boolean): Unit = {}
 
-  def setCaretVisible(bool: Boolean) = {}
+  def setCaretVisible(bool: Boolean): Unit = {}
+
+  def setEditable(editable: Boolean): Unit = {
+    codeAreaVirtual.getContent.setEditable(editable)
+  }
 
   override def requestFocus(): Unit = {
     super.requestFocus()

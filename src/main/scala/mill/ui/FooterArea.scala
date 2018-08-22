@@ -5,7 +5,6 @@ package mill.ui
 import java.lang
 
 import javafx.beans.property.DoubleProperty
-import javafx.beans.value.{ChangeListener, ObservableValue}
 import javafx.geometry.Insets
 import javafx.scene.control.{Label, Slider, TextField, Tooltip}
 import javafx.scene.input.{KeyCode, KeyEvent}
@@ -15,71 +14,75 @@ import mill.{EditorMode, Resources}
 import org.reactfx.value.Val
 
 class FooterArea private() extends BorderPane {
-  private val infoText = new TextField("File:")
-  private val posLabel = new Label("[1:2]")
-  private val zoomSlider = new Slider
-  private val zoomLabel = new Label
+  private val infoText = prepareInfoText()
+  private val posLabel = preparePosLabel()
+  private val zoomSlider = prepareZoomSlider()
+  private val zoomLabel = prepareLabels()
 
   init()
 
   private def init(): Unit = {
+    EditorMode.mode.addListener((_, _: Number, newValue: Number) => if (newValue.intValue() == EditorMode.COMMAND_MODE) infoText.requestFocus())
+
     this.getStyleClass.add("footer-bar")
+    this.setCenter(infoText)
+    this.setRight(new HBox(zoomSlider, zoomLabel, posLabel))
+  }
 
-    prepareLabels()
-    prepareZoomSlider()
+  private def preparePosLabel(): Label = {
+    val label = new Label("[1:2]")
+    label.setPadding(new Insets(1.0))
 
-    val dis: ObservableValue[java.lang.Boolean] = Val.map(EditorMode.mode, (sl: Number) => sl.intValue() != EditorMode.COMMAND_MODE)
-    infoText.disableProperty.bind(dis)
+    label
+  }
 
-    infoText.focusedProperty().addListener(new ChangeListener[lang.Boolean] {
-      override def changed(observableValue: ObservableValue[_ <: lang.Boolean], t: lang.Boolean, newValue: lang.Boolean): Unit = {
-        if (newValue) EditorMode.mode.set(EditorMode.COMMAND_MODE)
-      }
+  private def prepareInfoText(): TextField = {
+    val info = new TextField("File:")
+    info.disableProperty.bind(Val.map(EditorMode.mode, (sl: Number) => sl.intValue() != EditorMode.COMMAND_MODE))
+
+    info.focusedProperty().addListener((_, _: lang.Boolean, newValue: lang.Boolean) => {
+      if (newValue) EditorMode.mode.set(EditorMode.COMMAND_MODE)
     })
 
-    infoText.setPadding(new Insets(1.0))
-    infoText.minWidthProperty().bind(this.widthProperty().subtract(300))
-
-    EditorMode.mode.addListener(new ChangeListener[Number] {
-      override def changed(observableValue: ObservableValue[_ <: Number], t: Number, newValue: Number): Unit = {
-        if (newValue.intValue() == EditorMode.COMMAND_MODE) infoText.requestFocus()
-      }
-    })
-
-    infoText.addEventFilter(KeyEvent.KEY_PRESSED, (event: KeyEvent) => {
+    info.addEventFilter(KeyEvent.KEY_PRESSED, (event: KeyEvent) => {
       if (event.getCode == KeyCode.ENTER) {
         EditorMode.mode.set(EditorMode.NORMAL_MODE)
       }
     })
 
-    posLabel.setPadding(new Insets(1.0))
+    info.setPadding(new Insets(1.0))
+    info.minWidthProperty().bind(this.widthProperty().subtract(300))
 
-    val rightBox = new HBox(zoomSlider, zoomLabel, posLabel)
-
-    this.setCenter(infoText)
-    this.setRight(rightBox)
+    info
   }
 
-  private def prepareLabels(): Unit = {
-    zoomLabel.setText("25%")
-    zoomLabel.setTooltip(new Tooltip(Resources.CURRENT_ZOOM))
+  private def prepareLabels(): Label = {
+    val label = new Label()
+    label.setText("0%")
+    label.setMinWidth(40)
+    label.setTooltip(new Tooltip(Resources.CURRENT_ZOOM))
+
+    HBox.setMargin(label, new Insets(0, 0, 0, 5))
+    label
   }
 
-  private def prepareZoomSlider(): Unit = {
-    zoomSlider.setFocusTraversable(false)
-    zoomSlider.setMax(200)
-    zoomSlider.setPrefWidth(60.0)
-    zoomSlider.setTooltip(new Tooltip(Resources.ZOOM_SLIDER))
-    zoomSlider.valueProperty.addListener(new ChangeListener[Number] {
-      override def changed(observable: ObservableValue[_ <: Number], oldValue: Number, newValue: Number): Unit = {
-        val size = newValue.doubleValue / 10.0 + FooterArea.MIN_FONT_SIZE
+  private def prepareZoomSlider(): Slider = {
+    val slider = new Slider
+    slider.setFocusTraversable(false)
+    slider.setMax(200)
+    slider.setPrefWidth(60.0)
+    slider.setTooltip(new Tooltip(Resources.ZOOM_SLIDER))
 
-        val newVal: java.lang.Float = newValue.floatValue() / 2.0f
-        zoomLabel.setText(String.format("%2.0f", newVal) + "%")
+    slider.valueProperty.addListener((_, _: Number, newValue: Number) => {
+      val size = newValue.doubleValue / 10.0 + FooterArea.MIN_FONT_SIZE
 
-        if (AppController.instance().getActiveEditorBuffer != null) AppController.instance().getActiveEditorBuffer.getTextEditor.setFontSize(size)
-      }
+      val newVal: java.lang.Float = newValue.floatValue() / 2.0f
+      zoomLabel.setText(String.format("%2.0f", newVal) + "%")
+
+      if (AppController.instance().getActiveEditorBuffer != null) AppController.instance().getActiveEditorBuffer.getTextEditor.setFontSize(size)
     })
+
+    slider
   }
 
   def getZoomSliderValueProperty: DoubleProperty = zoomSlider.valueProperty

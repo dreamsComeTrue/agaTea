@@ -22,7 +22,10 @@ class ProjectView private() extends SplitPane with FXStageInitializer {
   init()
 
   def init(): Unit = {
-    editorPane = EditorArea.instance().init()
+    this.setPrefWidth(Double.MaxValue)
+    this.setPrefHeight(Double.MaxValue)
+
+    editorPane = EditorArea.instance().getConsoleSplitPane
     editorCenterStack = new StackPane(editorPane)
 
     ProjectExplorer.instance().initialize()

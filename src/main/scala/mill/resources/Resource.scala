@@ -31,7 +31,7 @@ abstract class Resource(var name: String) {
   /**
     * Saves resource to file on disk
     *
-    * @param path
+    * @param path path to save
     */
   def saveToFile(path: String): Unit
 }

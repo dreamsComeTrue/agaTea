@@ -2,17 +2,17 @@
 
 package mill.resources.settings
 
-import javafx.beans.property.SimpleStringProperty
+import scalafx.beans.property.StringProperty
 import scalafx.collections.ObservableBuffer
 
 class ProjectSettings() {
-  private val mainClass = new SimpleStringProperty
-  private val vmArguments = new SimpleStringProperty
+  private val mainClass = new StringProperty
+  private val vmArguments = new StringProperty
   private var dependencies = ObservableBuffer[String]()
 
   def getMainClass: String = mainClass.get
 
-  def mainClassProperty: SimpleStringProperty = mainClass
+  def mainClassProperty: StringProperty = mainClass
 
   def setMainClass(mainClass: String): Unit = {
     this.mainClass.set(mainClass)
@@ -20,7 +20,7 @@ class ProjectSettings() {
 
   def getVmArguments: String = vmArguments.get
 
-  def vmArgumentsProperty: SimpleStringProperty = vmArguments
+  def vmArgumentsProperty: StringProperty = vmArguments
 
   def setVmArguments(vmArguments: String): Unit = {
     this.vmArguments.set(vmArguments)

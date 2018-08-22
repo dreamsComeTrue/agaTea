@@ -2,9 +2,9 @@
 
 package mill.resources
 
-import javafx.beans.property.SimpleObjectProperty
 import mill.resources.files.PackageFile
 import mill.resources.settings.ProjectSettings
+import scalafx.beans.property.ObjectProperty
 import scalafx.collections.ObservableBuffer
 
 class Project(name: String) extends Resource(name) {
@@ -12,7 +12,7 @@ class Project(name: String) extends Resource(name) {
   protected var binDirectory: String = _
   protected var srcDirectory: String = _
   protected var packageFiles = new ObservableBuffer[PackageFile]()
-  protected var projectSettings = new SimpleObjectProperty[ProjectSettings](new ProjectSettings)
+  protected var projectSettings = new ObjectProperty[ProjectSettings](new ProjectSettings, "")
 
   def addPackageFile(packageFile: PackageFile): Unit = {
     packageFiles += packageFile

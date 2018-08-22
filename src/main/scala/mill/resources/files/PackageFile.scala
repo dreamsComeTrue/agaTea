@@ -24,7 +24,6 @@ object PackageFile {
 
     override def isProjectHandler = false
   }
-
 }
 
 class PackageFile(var project: Project, name: String, var outDirPath: String, var rawDirectory: Boolean) extends Resource(name) {
@@ -58,7 +57,6 @@ class PackageFile(var project: Project, name: String, var outDirPath: String, va
 
   def addPackage(name: String): PackageFile = if (findSubPackage(name) == null) {
     val pf = new PackageFile(this.getProject, name, outDirPath, false)
-
     packages += pf
 
     pf

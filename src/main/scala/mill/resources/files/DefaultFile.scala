@@ -2,12 +2,11 @@
 
 package mill.resources.files
 
-import java.io.{File, IOException}
+import java.io.PrintWriter
 
 import mill.controller.AppController
-import mill.model.ProjectsRepository
 import mill.resources.{Resource, ResourceHandler}
-import org.apache.commons.io.{FileUtils, FilenameUtils}
+import org.apache.commons.io.FilenameUtils
 
 object DefaultFile {
 
@@ -28,14 +27,12 @@ object DefaultFile {
       val defaultFile = new DefaultFile(fileName, filePath)
 
       AppController.instance().openResourceInEditor(fileName, filePath, defaultFile)
-      ProjectsRepository.instance().addOpenedFile(filePath, defaultFile)
 
       defaultFile
     }
 
     override def isProjectHandler = false
   }
-
 }
 
 class DefaultFile(name: String, var fullPath: String) extends Resource(name) {
@@ -50,12 +47,9 @@ class DefaultFile(name: String, var fullPath: String) extends Resource(name) {
   }
 
   override def saveToFile(path: String): Unit = {
-    val file = new File(getFullPath)
-    try
-      FileUtils.writeStringToFile(file, content)
-    catch {
-      case e: IOException =>
-        e.printStackTrace()
+    new PrintWriter(getFullPath) {
+      write(content);
+      close()
     }
   }
 }

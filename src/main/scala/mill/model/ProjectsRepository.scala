@@ -2,48 +2,50 @@
 
 package mill.model
 
-import javafx.beans.property.SimpleObjectProperty
-import javafx.collections.{FXCollections, ObservableMap}
 import mill.resources.{Project, Resource}
 import org.apache.commons.io.FilenameUtils
+import scalafx.beans.property.ObjectProperty
+import scalafx.collections.ObservableHashMap
 
 class ProjectsRepository private() {
-  private val projects = FXCollections.observableHashMap[String, Project]
+  private val projects = new ObservableHashMap[String, Project]()
   private val _activeProject: Project = null
-  private val activeProject = new SimpleObjectProperty[Project](_activeProject)
-  private val openFiles = FXCollections.observableHashMap[String, Resource]
+  private val activeProject = new ObjectProperty[Project](_activeProject, "")
+  private val openFiles = new ObservableHashMap[String, Resource]()
 
-  def getProjects: ObservableMap[String, Project] = projects
+  def getProjects: ObservableHashMap[String, Project] = projects
 
-  def findProject(name: String): Project = projects.get(name)
+  def findProject(name: String): Project = projects(name)
 
   def addProject(projectName: String, project: Project): Boolean = {
     if (!projects.containsKey(projectName)) {
       projects.put(projectName, project)
 
-      return true
+      true
+    } else {
+      false
     }
-    false
   }
 
   def removeProject(projectName: String): Boolean = {
     if (projects.containsKey(projectName)) {
       projects.remove(projectName)
 
-      return true
+      true
+    } else {
+      false
     }
-    false
   }
 
   def getActiveProject: Project = activeProject.get
 
-  def activeProjectProperty: SimpleObjectProperty[Project] = activeProject
+  def activeProjectProperty: ObjectProperty[Project] = activeProject
 
   def setActiveProject(activeProject: Project): Unit = {
     this.activeProject.set(activeProject)
   }
 
-  def getOpenFiles: ObservableMap[String, Resource] = openFiles
+  def getOpenFiles: ObservableHashMap[String, Resource] = openFiles
 
   def closeOpenFile(filePath: String): Unit = {
     openFiles.remove(FilenameUtils.normalize(filePath))
@@ -58,19 +60,19 @@ class ProjectsRepository private() {
 
     if (!openFiles.containsKey(normalFilePath)) {
       openFiles.put(normalFilePath, resource)
-      return true
+      true
+    } else {
+      false
     }
-
-    false
   }
 
   def isFileOpened(filePath: String): Boolean = openFiles.containsKey(FilenameUtils.normalize(filePath))
 
-  def getOpenedFile(filePath: String): Resource = openFiles.get(filePath)
+  def getOpenedFile(filePath: String): Resource = openFiles(filePath)
 
   def isProjectOpened(filePath: String): Boolean = projects.containsKey(FilenameUtils.normalize(filePath))
 
-  def getOpenedProject(filePath: String): Resource = projects.get(filePath)
+  def getOpenedProject(filePath: String): Resource = projects(filePath)
 }
 
 
